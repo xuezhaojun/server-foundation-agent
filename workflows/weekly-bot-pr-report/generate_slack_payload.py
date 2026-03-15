@@ -13,9 +13,6 @@ import os
 import sys
 import datetime
 
-# Max example PRs to show per category in Slack
-MAX_EXAMPLES = 3
-
 # Slack user group mention for Server Foundation team
 SF_GROUP_MENTION = "<!subteam^S04N59L7UPR|acm-server-foundation>"
 
@@ -112,9 +109,7 @@ def main():
     merge_prs = sorted(by_action.get("recommend-merge", []), key=lambda x: x["age_days"])
     if merge_prs:
         text = f"*\U0001f7e2 Recommend Merge ({n_merge})*\n"
-        text += "\n".join(format_pr_line(d) for d in merge_prs[:MAX_EXAMPLES])
-        if n_merge > MAX_EXAMPLES:
-            text += f"\n_...and {n_merge - MAX_EXAMPLES} more_"
+        text += "\n".join(format_pr_line(d) for d in merge_prs)
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
     else:
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": "*\U0001f7e2 Recommend Merge (0)* \u2014 None right now"}})
@@ -125,9 +120,7 @@ def main():
     patched_prs = sorted(by_action.get("patched", []), key=lambda x: x["repo"])
     if patched_prs:
         text = f"*\U0001f527 Auto-Patched ({n_patched})*\n"
-        text += "\n".join(format_pr_line(d) for d in patched_prs[:MAX_EXAMPLES])
-        if n_patched > MAX_EXAMPLES:
-            text += f"\n_...and {n_patched - MAX_EXAMPLES} more_"
+        text += "\n".join(format_pr_line(d) for d in patched_prs)
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
         blocks.append({"type": "divider"})
 
@@ -135,9 +128,7 @@ def main():
     retest_prs = sorted(by_action.get("retest", []), key=lambda x: x["repo"])
     if retest_prs:
         text = f"*\U0001f504 Recommend Retest ({n_retest})*\n"
-        text += "\n".join(format_pr_line(d) for d in retest_prs[:MAX_EXAMPLES])
-        if n_retest > MAX_EXAMPLES:
-            text += f"\n_...and {n_retest - MAX_EXAMPLES} more_"
+        text += "\n".join(format_pr_line(d) for d in retest_prs)
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
         blocks.append({"type": "divider"})
 
@@ -145,9 +136,7 @@ def main():
     manual_prs = sorted(by_action.get("needs-manual", []), key=lambda x: x["repo"])
     if manual_prs:
         text = f"*\u26a0\ufe0f Needs Manual ({n_manual})*\n"
-        text += "\n".join(format_pr_line(d) for d in manual_prs[:MAX_EXAMPLES])
-        if n_manual > MAX_EXAMPLES:
-            text += f"\n_...and {n_manual - MAX_EXAMPLES} more_"
+        text += "\n".join(format_pr_line(d) for d in manual_prs)
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
 
     # --- Context footer ---
