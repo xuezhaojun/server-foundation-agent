@@ -2,3 +2,13 @@
 **/secrets.yaml
 **/secrets.*.yaml
 !**/secrets.example.yaml
+
+# Local environment files
+.env
+.envrc
+
+# Cloned repositories and worktrees
+repos/
+
+# Intermediate build/run artifacts
+.output/

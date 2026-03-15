@@ -11,27 +11,45 @@ The report helps the team identify merge-ready PRs, stale PRs, conflicts, and bo
 ## Workflow Phases
 
 ```
-Phase 1: Collect    →  Phase 2: Process    →  Phase 3: Report    →  Phase 4: Distribute (optional)
-fetch-prs.sh all       filter & classify       generate Markdown       slack-notify
+Phase 1: Collect    →  Phase 2: Process    →  Phase 3: Report    →  Phase 4: Distribute
+fetch-prs skill        filter & classify       generate Markdown       slack-notify
+```
+
+---
+
+## Bundled Scripts
+
+This workflow includes ready-to-use scripts. **Do NOT write your own processing scripts** — use the bundled ones:
+
+```
+workflows/weekly-pr-report/
+├── process_prs.jq              # Phase 2: filter & classify
+├── generate_report.py          # Phase 3: generate Markdown
+└── generate_slack_payload.py   # Phase 4: generate Slack payload
 ```
 
 ---
 
 ## Phase 1: Collect PR Data
 
-Run the fetch-prs script with `all` detail level to get full PR lifecycle data:
+Use the `fetch-prs` skill with `all` detail level to get full PR lifecycle data.
 
-```bash
-cd /Users/zxue/workspaces/server-foundation-agent/.claude/skills/fetch-prs && bash fetch-prs.sh all
-```
+This returns a JSON array. Save it to a temp file for Phase 2.
 
-This returns a JSON array. Parse it with `jq`.
-
-**Dependency**: `.claude/skills/fetch-prs/fetch-prs.sh`
+**Dependency**: `.claude/skills/fetch-prs/SKILL.md`
 
 ---
 
 ## Phase 2: Process & Classify
+
+Run the bundled jq script to filter and classify PRs in a single pass:
+
+```bash
+mkdir -p .output
+jq --argjson today_sec $(date +%s) -f workflows/weekly-pr-report/process_prs.jq <raw_prs.json> > .output/processed_prs.json
+```
+
+The script implements all the rules documented below. The reference rules are kept here for maintainability — if you need to change classification logic, update both the documentation below AND the `process_prs.jq` script.
 
 ### 2.1 Filter to Open Human PRs
 
@@ -97,7 +115,13 @@ For every PR, compute days since `updatedAt` relative to today's date and assign
 
 ## Phase 3: Generate Report
 
-Produce the report in Markdown using the exact section order and format below.
+Run the bundled script to generate the Markdown report:
+
+```bash
+python3 workflows/weekly-pr-report/generate_report.py .output/processed_prs.json .output/weekly_pr_report.md
+```
+
+The script produces the report using the exact section order and format documented below.
 
 ### Report Template
 
@@ -238,13 +262,144 @@ PRs with `mergeable == "CONFLICTING"` across ALL categories.
 
 ---
 
-## Phase 4: Distribute (optional)
+## Phase 4: Distribute
 
-If the user requests Slack notification, invoke the `slack-notify` skill with the generated Markdown report.
+Run the bundled script to generate the Slack payload, then send it:
 
-**Dependency**: `.claude/skills/slack-notify/SKILL.md`
+```bash
+python3 workflows/weekly-pr-report/generate_slack_payload.py .output/processed_prs.json .output/slack_payload.json
+bash .claude/skills/slack-notify/send_to_slack.sh .output/slack_payload.json
+```
 
-Common trigger: user says "generate weekly PR report and send to Slack".
+**Dependencies**:
+- `workflows/weekly-pr-report/generate_slack_payload.py`
+- `.claude/skills/slack-notify/send_to_slack.sh`
+
+### Slack Message Design Principles
+
+1. **Concise** — Slack is for notifications, not full documents. Show highlights only.
+2. **Scannable** — Use bold text for labels, emojis only for section headings.
+3. **Actionable** — Prioritize PRs that need immediate attention.
+4. **Limited** — Show at most **3 example PRs per category**. For each category, show the total count and representative examples.
+5. **Clickable** — PR links must be in mrkdwn (`<url|#number>`) outside code blocks so they render as clickable links.
+
+### PR Display Limits
+
+| Category | Max PRs shown | Selection rule |
+|----------|---------------|----------------|
+| Ready to Merge | 3 | Show all if ≤3, otherwise newest first |
+| Needs Review | 3 | Stalest first (most urgent) |
+| Approved/LGTM | 3 | Stalest first |
+| WIP | 0 | Count only |
+| On Hold | 0 | Count only |
+| Stale Alert | 3 | Oldest abandoned/very stale PRs |
+| Conflict Alert | 3 | Stalest first |
+
+If a category has more PRs than the display limit, append: `_...and {N} more_`
+
+### Slack Message Template
+
+The `generate_slack_payload.py` script builds the following Block Kit structure.
+
+#### Emoji Conventions
+
+Emojis are used **only** on section headings, not on summary line labels:
+
+| Purpose | Emoji |
+|---------|-------|
+| Report title | 📊 |
+| Ready to Merge heading | 🟢 |
+| Needs Review heading | 👀 |
+| Approved/Needs LGTM heading | ✅ |
+| Stale Alert heading | 🕸️ |
+| Conflict Alert heading | ⚠️ |
+| Health score | ❤️ (<40%) or 💛 (40-59%) or 💚 (≥60%) |
+| Abandoned PR marker | 💀 |
+| Stale PR marker | 🕸️ |
+
+Summary labels (Ready, Review, LGTM needed, WIP, Hold, Rebase) use **bold** text only, no emojis.
+
+#### Message Structure
+
+**Block 1 — Header** (`header` block, `plain_text`):
+```
+📊 Server Foundation Weekly PR Report — {YYYY-MM-DD}
+```
+
+**Block 2 — Executive Summary** (`section` block, `mrkdwn`):
+```
+*Summary:* {N} open PRs · {health_emoji} {pct}% healthy
+*Ready:* {n}  ·  *Review:* {n}  ·  *LGTM needed:* {n}
+*WIP:* {n}  ·  *Hold:* {n}  ·  *Rebase:* {n}
+```
+
+**Block 3 — Divider**
+
+**Block 4 — Ready to Merge** (`section` block, `mrkdwn`):
+```
+*🟢 Ready to Merge ({n})*
+• <url|#123> *repo* — Title · @author · _5d_
+• <url|#456> *repo* — Title · @author · _2d_
+• <url|#789> *repo* — Title · @author · _1d_
+```
+Or if empty: `*🟢 Ready to Merge (0)* — None right now`
+
+**Block 5 — Divider**
+
+**Block 6 — Needs Review** (`section` block, `mrkdwn`):
+```
+*👀 Needs Review ({n})*
+• <url|#789> *repo* — Title · @author · _12d_ 🕸️
+• <url|#101> *repo* — Title · @author · _8d_
+• <url|#102> *repo* — Title · @author · _5d_
+_...and {remaining} more_
+```
+
+**Block 7 — Divider**
+
+**Block 8 — Approved/Needs LGTM** (`section` block, `mrkdwn`):
+```
+*✅ Approved, Needs LGTM ({n})*
+• <url|#111> *repo* — Title · @author · _3d_
+_...and {remaining} more_
+```
+
+**Block 9 — Divider**
+
+**Block 10 — Stale PR Alert** (`section` block, `mrkdwn`, only if stale PRs exist):
+```
+*🕸️ Stale PR Alert*
+_{n1} abandoned · {n2} very stale · {n3} stale_
+• <url|#222> *repo* — Title · @author · _934d_ 💀
+• <url|#333> *repo* — Title · @author · _66d_ 🕸️
+• <url|#444> *repo* — Title · @author · _20d_ 🕸️
+```
+
+**Block 11 — Divider** (only if conflicts exist)
+
+**Block 12 — Conflict Alert** (`section` block, `mrkdwn`, only if conflicts exist):
+```
+*⚠️ Merge Conflicts ({n})*
+• <url|#444> *repo* — Title · @author
+_...and {remaining} more_
+```
+
+**Block 13 — Context** (`context` block):
+```
+Generated by server-foundation-agent · {YYYY-MM-DD}
+```
+
+#### PR Line Format
+
+Each PR line follows this pattern:
+```
+• <{pr_url}|#{number}> *{short_repo}* — {title} · @{author} · _{days}d_
+```
+
+Where:
+- `{short_repo}` — short repository name, e.g. `ocm`, `api`, `cluster-proxy` (drop the org prefix)
+- `{title}` — truncate to 50 characters if longer, append `…`
+- `_{days}d_` — days since last update, in italic
 
 ---
 
@@ -259,6 +414,6 @@ Common trigger: user says "generate weekly PR report and send to Slack".
 
 ## Performance Notes
 
-- The `fetch-prs.sh all` call may take a few seconds for the initial API call; subsequent calls use the 5-minute cache
+- The `fetch-prs` skill call may take a few seconds for the initial API call; subsequent calls use the 5-minute cache
 - All filtering, classification, and aggregation should be done with `jq` in a single pass when possible
 - Do NOT use `nocache` unless the user explicitly requests fresh data

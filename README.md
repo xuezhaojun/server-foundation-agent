@@ -18,6 +18,7 @@ Built on the **repo-as-agent** pattern: the repo **is** the agent. `README.md` d
 |-------|-------------|---------|
 | [fetch-prs](.claude/skills/fetch-prs/SKILL.md) | Fetch all active PRs for the Server Foundation team | On demand |
 | [slack-notify](.claude/skills/slack-notify/SKILL.md) | Send formatted notifications to Slack | On demand |
+| [clone-worktree](.claude/skills/clone-worktree/SKILL.md) | Clone a repo and create a worktree for a PR branch | On demand |
 
 ## Architecture
 
@@ -49,6 +50,20 @@ Built on the **repo-as-agent** pattern: the repo **is** the agent. `README.md` d
 - Use `gh` CLI for all GitHub operations (PRs, issues, reviews)
 - Always include relevant labels on PRs
 
+## Intermediate Artifacts
+
+All intermediate and generated files (processed data, reports, payloads, temp scripts) **MUST** go into the `.output/` directory, never the project root. This directory is git-ignored.
+
+```bash
+mkdir -p .output
+# Example: processed PR data, generated reports, Slack payloads
+jq ... > .output/processed_prs.json
+python3 ... .output/report.md
+python3 ... .output/slack_payload.json
+```
+
+**NEVER** create intermediate files like `*.json`, `*.py`, `*.sh`, `report.md` in the project root. If a script needs a working directory, use `.output/`.
+
 ## Error Handling
 
 - If a step fails and you cannot fix it, stop and report clearly
@@ -67,6 +82,35 @@ When you need to look up a team member's info or find who owns a component, read
 **Name matching notes:**
 - Users may use abbreviations or all lowercase (e.g., "zhiwei" = "Yin ZhiWei")
 - Chinese and English name orders may differ (e.g., "Zhao Xue" and "Xue Zhao" are the same person)
+
+## Local Development
+
+To run the agent locally with the same secrets used in the cluster, use [direnv](https://direnv.net/) to auto-load environment variables from `deploy/secrets.yaml`.
+
+**Setup (one-time):**
+
+```bash
+# 1. Install direnv
+brew install direnv
+
+# 2. Add hook to your shell (zsh)
+echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
+source ~/.zshrc
+
+# 3. Generate .env from K8s secrets
+yq eval-all '.stringData // {} | to_entries[] | .key + "=" + "\"" + (.value | sub("\n$","") ) + "\""' deploy/secrets.yaml | grep -v '^---$' > .env
+
+# 4. Allow direnv for this directory
+direnv allow
+```
+
+After this, entering the project directory will automatically export all secrets as environment variables. The `.env` and `.envrc` files are git-ignored.
+
+**Regenerate after secrets change:**
+
+```bash
+yq eval-all '.stringData // {} | to_entries[] | .key + "=" + "\"" + (.value | sub("\n$","") ) + "\""' deploy/secrets.yaml | grep -v '^---$' > .env
+```
 
 ## Deployment
 

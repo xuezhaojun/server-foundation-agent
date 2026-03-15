@@ -34,23 +34,46 @@ Before sending, always verify it is set:
 
 If not set, ask the user to provide it or set the environment variable.
 
+## Bundled Script
+
+This skill includes a ready-to-use send script. **Do NOT write your own send script** — use the bundled one:
+
+```
+.claude/skills/slack-notify/send_to_slack.sh
+```
+
+Usage:
+```bash
+# From a JSON file:
+bash .claude/skills/slack-notify/send_to_slack.sh payload.json
+
+# From stdin:
+echo "$payload_json" | bash .claude/skills/slack-notify/send_to_slack.sh
+```
+
+The script handles single payloads, arrays of payloads (multi-part), rate limiting, and retries.
+
 ## Execution Steps
 
 ### Step 1: Prepare the Content
 
-Receive Markdown content from the caller (another skill, the user, or a task output). The content is typically already in standard Markdown format.
+Receive content from the caller (another skill, the user, or a task output).
 
-### Step 2: Convert Markdown to Slack Block Kit
+### Step 2: Build Slack Block Kit JSON
 
-Transform the Markdown content into a JSON array of Slack blocks following the conversion rules below.
+Build the Block Kit JSON payload directly using `jq`. Follow the conversion rules and formatting guidelines below. **Do NOT generate intermediate Python/shell scripts** — construct the JSON in-place with `jq`.
 
 ### Step 3: Enforce Slack Limits
 
 Check the generated blocks against Slack's limits. If they exceed limits, split into multiple payloads.
 
-### Step 4: Send via Webhook
+### Step 4: Send via Bundled Script
 
-POST each payload to the webhook URL, respecting rate limits.
+Save the JSON payload to a file and use the bundled `send_to_slack.sh` to send it:
+
+```bash
+bash .claude/skills/slack-notify/send_to_slack.sh payload.json
+```
 
 ---
 
@@ -92,31 +115,43 @@ Apply these transformations to all text content within blocks. **Order matters**
 
 ### Table Conversion
 
-Slack mrkdwn does not support Markdown tables. Convert them to monospace ASCII art inside a code block:
+Slack mrkdwn does NOT support Markdown tables. Choose the right conversion based on content:
+
+**CRITICAL**: Code blocks (`` ``` ``) in Slack render as **plain monospace text**. All mrkdwn formatting is disabled inside code blocks — links (`<url|text>`), bold (`*text*`), and emoji shortcodes do NOT render. Never put clickable links inside code blocks.
+
+#### Option A: Bullet lists (preferred for content with links)
+
+When table rows contain links, authors, or other content that needs mrkdwn formatting, convert to bullet lists:
 
 **Input (Markdown):**
 ```
-| Name | Status | Age |
-|------|--------|-----|
-| PR-1 | Open   | 5d  |
-| PR-2 | Merged | 2d  |
+| PR | Repository | Author | Title | Age |
+|----|------------|--------|-------|-----|
+| [#123](url) | ocm | @alice | Fix bug | 5d |
+| [#456](url) | api | @bob | Add feature | 2d |
 ```
 
 **Output (Slack mrkdwn):**
-````
+```
+• <url|#123> *ocm* — Fix bug · @alice · _5d_
+• <url|#456> *api* — Add feature · @bob · _2d_
+```
+
+#### Option B: Code block table (only for plain text data)
+
+When table content is purely plain text with no links or formatting, use a compact ASCII table:
+
 ```
 Name   Status   Age
 ────   ──────   ───
 PR-1   Open     5d
 PR-2   Merged   2d
 ```
-````
 
-Rules for table conversion:
+Rules for code block tables:
 - Remove pipe (`|`) delimiters, use spacing for alignment
 - Replace the separator row (`|------|`) with `────` Unicode box-drawing characters
-- Pad columns to align (left-align by default)
-- If table is wider than ~70 characters, consider abbreviating column headers or splitting
+- Keep total width under 60 characters for mobile readability
 
 ### Lists
 
@@ -203,64 +238,30 @@ If a single section block exceeds 3,000 chars (e.g., a very long code block or t
 
 ## Sending the Message
 
-### Basic Send
+Use the bundled script — do NOT write your own curl logic:
 
 ```bash
-response=$(curl -s -w "\n%{http_code}" -X POST \
-  -H 'Content-type: application/json; charset=utf-8' \
-  -d "$payload_json" \
-  "$SLACK_WEBHOOK_URL")
-
-http_code=$(echo "$response" | tail -1)
-body=$(echo "$response" | head -1)
-
-if [ "$http_code" = "200" ] && [ "$body" = "ok" ]; then
-  echo "Message sent successfully"
-elif [ "$http_code" = "429" ]; then
-  retry_after=$(echo "$response" | grep -i "retry-after" | awk '{print $2}')
-  echo "Rate limited. Retry after ${retry_after:-1} seconds."
-  sleep "${retry_after:-2}"
-  # retry once
-else
-  echo "ERROR: Slack returned HTTP $http_code: $body"
-fi
+# Single or multi-part payload:
+bash .claude/skills/slack-notify/send_to_slack.sh payload.json
 ```
+
+The script handles HTTP status codes, rate limiting (429), retries, and multi-part splitting automatically.
 
 ### Payload Construction
 
 Build the JSON payload using `jq` to ensure proper escaping:
 
 ```bash
-# For a simple message:
 payload=$(jq -n \
   --arg text "$fallback_text" \
   --argjson blocks "$blocks_json" \
   '{text: $text, blocks: $blocks}')
 
-curl -s -X POST \
-  -H 'Content-type: application/json; charset=utf-8' \
-  -d "$payload" \
-  "$SLACK_WEBHOOK_URL"
+echo "$payload" > payload.json
+bash .claude/skills/slack-notify/send_to_slack.sh payload.json
 ```
 
 **Critical**: Always use `jq` for JSON construction — never build JSON with string concatenation or `echo`. This prevents broken payloads from special characters in the content.
-
-### Multi-Part Send
-
-```bash
-total=${#payloads[@]}
-for i in "${!payloads[@]}"; do
-  part=$((i + 1))
-  curl -s -X POST \
-    -H 'Content-type: application/json; charset=utf-8' \
-    -d "${payloads[$i]}" \
-    "$SLACK_WEBHOOK_URL"
-
-  if [ $part -lt $total ]; then
-    sleep 1  # rate limit: 1 msg/sec
-  fi
-done
-```
 
 ---
 
