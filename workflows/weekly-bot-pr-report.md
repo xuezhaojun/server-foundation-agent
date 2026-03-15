@@ -29,7 +29,8 @@ workflows/weekly-bot-pr-report/
 ├── failure-patterns/
 │   ├── 01-go-version-mismatch.md   # FP-01: Go version upgrade detection & fix
 │   ├── 02-e2e-cluster-pool.md      # FP-02: E2E cluster pool claim failure
-│   └── 03-build-failure.md         # FP-03: Build compilation failure
+│   ├── 03-build-failure.md         # FP-03: Build compilation failure
+│   └── 04-sonarcloud.md            # FP-04: SonarCloud code analysis failure
 ├── generate_report.py              # Phase 4: generate Markdown report
 └── generate_slack_payload.py       # Phase 5: generate Slack payload
 ```
@@ -98,7 +99,7 @@ For each PR with `check_status == "has_failures"`, spawn a **sub-agent** to diag
 Each sub-agent:
 1. Receives the PR metadata (from Phase 2 output)
 2. Reads `workflows/weekly-bot-pr-report/diagnose_pr.md` for its instructions
-3. Applies failure patterns from `workflows/weekly-bot-pr-report/failure-patterns/` **in order** (FP-01 → FP-02 → FP-03)
+3. Applies failure patterns from `workflows/weekly-bot-pr-report/failure-patterns/` **in order** (FP-01 → FP-02 → FP-03 → FP-04)
 4. First match wins — stops checking after a pattern matches
 5. For patterns requiring clone (FP-01, FP-03): uses the `clone-worktree` skill to check out code, attempt fix, push patch
 6. Writes result to `.output/diagnoses/pr-<NUMBER>.json`
@@ -148,7 +149,7 @@ Each sub-agent writes a JSON file to `.output/diagnoses/pr-<NUMBER>.json`:
 | Category | Meaning | Source |
 |----------|---------|--------|
 | **Recommend Merge** | All checks passed | Pre-diagnosis filter |
-| **Auto-Patched** | Agent found and pushed a fix | Sub-agent, FP-01 or FP-03 |
+| **Auto-Patched** | Agent found and pushed a fix | Sub-agent, FP-01, FP-03, or FP-04 |
 | **Recommend Retest** | Infra issue, just needs `/retest` | Sub-agent, FP-02 |
 | **Needs Manual** | Agent could not fix automatically | Sub-agent, default |
 | **Skipped (Fork)** | Cross-repo PR, can't push | Sub-agent, fork detection |
@@ -216,6 +217,7 @@ Failure patterns are defined in `workflows/weekly-bot-pr-report/failure-patterns
 | FP-01 | [Go Version Mismatch](weekly-bot-pr-report/failure-patterns/01-go-version-mismatch.md) | `patched` | Yes |
 | FP-02 | [E2E Cluster Pool Claim](weekly-bot-pr-report/failure-patterns/02-e2e-cluster-pool.md) | `retest` | No |
 | FP-03 | [Build Failure](weekly-bot-pr-report/failure-patterns/03-build-failure.md) | `patched` | Yes |
+| FP-04 | [SonarCloud Code Analysis](weekly-bot-pr-report/failure-patterns/04-sonarcloud.md) | `patched` | Yes |
 
 To add a new failure pattern:
 1. Create `workflows/weekly-bot-pr-report/failure-patterns/NN-pattern-name.md`
@@ -230,7 +232,7 @@ To add a new failure pattern:
 - **PR with no checks reported**: `gh pr checks` returns empty — treat as "Pending" (no_checks).
 - **PR with only `tide` pending**: If the only non-pass check is `tide`, treat as "All pass".
 - **`renovate/artifacts` check**: Note but do not treat as build failure — indicates Renovate could not auto-update lock files.
-- **`SonarCloud Code Analysis`**: Excluded from classification — code quality check, not build.
+- **`SonarCloud Code Analysis`**: Now included in classification. FP-04 handles it when it's the only failing check.
 - **Monorepo PRs (e.g., stolostron/ocm)**: A single PR may trigger checks for multiple components. All must pass.
 - **Fork PRs (`isCrossRepository`)**: Sub-agent detects and skips — cannot push to external forks.
 - **Checks still running**: If `check_status` is `mixed` (some pass, some pending, no failures), classify as Pending.

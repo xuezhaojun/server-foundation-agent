@@ -67,6 +67,7 @@ Read each failure pattern file from the `failure-patterns/` directory:
 1. `workflows/weekly-bot-pr-report/failure-patterns/01-go-version-mismatch.md` (FP-01)
 2. `workflows/weekly-bot-pr-report/failure-patterns/02-e2e-cluster-pool.md` (FP-02)
 3. `workflows/weekly-bot-pr-report/failure-patterns/03-build-failure.md` (FP-03)
+4. `workflows/weekly-bot-pr-report/failure-patterns/04-sonarcloud.md` (FP-04)
 
 For each pattern:
 1. Follow the **Detection** section to check if the pattern matches.
@@ -104,7 +105,7 @@ mkdir -p .output/diagnoses
   "author": "red-hat-konflux",
   "branch": "backplane-2.9",
   "age_days": 5,
-  "pattern_matched": "go-version-mismatch | e2e-cluster-pool | build-failure | none | unknown",
+  "pattern_matched": "go-version-mismatch | e2e-cluster-pool | build-failure | sonarcloud | none | unknown",
   "action": "recommend-merge | patched | retest | needs-manual | skipped-fork | pending",
   "action_details": "Human-readable description of what was found/done",
   "failed_checks": ["ci/prow/images", "ci/prow/e2e"],
@@ -117,7 +118,7 @@ mkdir -p .output/diagnoses
 | Action | Meaning |
 |--------|---------|
 | `recommend-merge` | All checks passed — safe to merge |
-| `patched` | Agent found and pushed a fix (FP-01 or FP-03) |
+| `patched` | Agent found and pushed a fix (FP-01, FP-03, or FP-04) |
 | `retest` | Infrastructure issue — recommend `/retest` (FP-02) |
 | `needs-manual` | Agent could not fix automatically |
 | `skipped-fork` | Cross-repo PR — cannot push to fork |

@@ -16,7 +16,8 @@ import sys
 
 
 # Checks to exclude from pass/fail classification
-EXCLUDED_CHECKS = {"tide", "SonarCloud Code Analysis"}
+# Note: SonarCloud is intentionally NOT excluded — FP-04 handles it
+EXCLUDED_CHECKS = {"tide"}
 
 
 def get_pr_checks(repo, pr_number):
@@ -42,7 +43,7 @@ def get_pr_checks(repo, pr_number):
 
 
 def classify_checks(checks):
-    """Classify PR check status, excluding tide and SonarCloud."""
+    """Classify PR check status, excluding tide."""
     relevant = [c for c in checks if c.get("name") not in EXCLUDED_CHECKS]
 
     if not relevant:

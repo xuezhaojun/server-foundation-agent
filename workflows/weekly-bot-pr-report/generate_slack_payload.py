@@ -36,6 +36,7 @@ PATTERN_NAMES = {
     "go-version-mismatch": "Go Version Mismatch",
     "e2e-cluster-pool": "E2E Cluster Pool",
     "build-failure": "Build Failure",
+    "sonarcloud": "SonarCloud Code Analysis",
     "none": "No pattern",
     "unknown": "Unknown",
 }
