@@ -31,6 +31,38 @@ def format_pr_line(d):
     return f"\u2022 <{d['url']}|#{d['pr_number']}> *{short_repo}* \u2014 {title} \u00b7 @{d['author']} \u00b7 _{d['age_days']}d_"
 
 
+# Friendly display names for failure pattern IDs
+PATTERN_NAMES = {
+    "go-version-mismatch": "Go Version Mismatch",
+    "e2e-cluster-pool": "E2E Cluster Pool",
+    "build-failure": "Build Failure",
+    "none": "No pattern",
+    "unknown": "Unknown",
+}
+
+
+def format_patched_pr(d):
+    """Format an auto-patched PR with pattern and fix details."""
+    line = format_pr_line(d)
+    pattern = PATTERN_NAMES.get(d.get('pattern_matched', ''), d.get('pattern_matched', ''))
+    details = escape_mrkdwn(d.get('action_details', ''))
+    line += f"\n     _Pattern:_ `{pattern}` \u2014 {details}"
+    return line
+
+
+def format_manual_pr(d):
+    """Format a needs-manual PR with diagnosis details and failed checks."""
+    line = format_pr_line(d)
+    failed = d.get('failed_checks', [])
+    details = escape_mrkdwn(d.get('action_details', ''))
+    if failed:
+        checks_str = ", ".join(f"`{c}`" for c in failed)
+        line += f"\n     _Failed:_ {checks_str}"
+    if details:
+        line += f"\n     _Reason:_ {details}"
+    return line
+
+
 def load_diagnoses(diagnoses_dir):
     """Load all pr-*.json files from the diagnoses directory."""
     pattern = os.path.join(diagnoses_dir, "pr-*.json")
@@ -120,7 +152,7 @@ def main():
     patched_prs = sorted(by_action.get("patched", []), key=lambda x: x["repo"])
     if patched_prs:
         text = f"*\U0001f527 Auto-Patched ({n_patched})*\n"
-        text += "\n".join(format_pr_line(d) for d in patched_prs)
+        text += "\n".join(format_patched_pr(d) for d in patched_prs)
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
         blocks.append({"type": "divider"})
 
@@ -136,7 +168,7 @@ def main():
     manual_prs = sorted(by_action.get("needs-manual", []), key=lambda x: x["repo"])
     if manual_prs:
         text = f"*\u26a0\ufe0f Needs Manual ({n_manual})*\n"
-        text += "\n".join(format_pr_line(d) for d in manual_prs)
+        text += "\n".join(format_manual_pr(d) for d in manual_prs)
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
 
     # --- Context footer ---
