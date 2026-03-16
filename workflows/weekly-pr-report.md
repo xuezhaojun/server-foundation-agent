@@ -78,6 +78,7 @@ Extract these fields from each PR:
 - **isDraft**: `.content.isDraft` — boolean
 - **mergeable**: `.content.mergeable` — enum: `MERGEABLE`, `CONFLICTING`, or `UNKNOWN`
 - **reviewDecision**: `.content.reviewDecision` — enum: `APPROVED`, `CHANGES_REQUESTED`, `REVIEW_REQUIRED`, or `null`
+- **comments**: `.content.comments.nodes` — first 20 issue comments with author login (used for feedback detection)
 - **updatedAt**: `.content.updatedAt` — ISO 8601 timestamp
 
 Helper definitions for rules:
@@ -98,7 +99,16 @@ Helper definitions for rules:
 | 5 | **Approved, Needs LGTM** | has `approved` AND NOT has `lgtm` AND NO `do-not-merge/*` labels |
 | 6 | **Needs Review** | catch-all for everything else |
 
-### 2.3 Compute Staleness
+### 2.3 Feedback Detection
+
+For PRs classified as "Needs Review", detect whether non-author comments exist. This helps distinguish PRs that have received informal review feedback (via comments) from PRs that have had no reviewer engagement at all.
+
+- **`feedback_count`**: Number of comments from users other than the PR author (from first 20 comments)
+- **`has_feedback`**: `true` if `feedback_count > 0`
+
+Reviewers sometimes leave feedback as regular PR comments instead of formal GitHub reviews. This indicator surfaces that activity so "Needs Review" PRs with existing discussion can be prioritized differently from completely unreviewed ones.
+
+### 2.4 Compute Staleness
 
 For every PR, compute days since `updatedAt` relative to today's date and assign a staleness bucket:
 
@@ -151,11 +161,12 @@ These PRs are approved, have LGTM, and are mergeable. They should be merged prom
 
 ## Action Required: Needs Review
 
-These PRs have no approval or LGTM yet and need reviewer attention.
+These PRs have no approval or LGTM yet and need reviewer attention. The Feedback column shows 💬N if non-author comments exist, indicating informal review activity.
 
-| PR | Repository | Author | Title | Days since update | Staleness |
-|----|------------|--------|-------|--------------------|-----------|
-| [#123](url) | repo-name | @author | Title text | 12 | Aging |
+| PR | Repository | Author | Title | Days since update | Staleness | Feedback |
+|----|------------|--------|-------|--------------------|-----------|----------|
+| [#123](url) | repo-name | @author | Title text | 12 | Aging | 💬3 |
+| [#456](url) | repo-name | @author | Title text | 5 | Normal | |
 
 > Sort by days since update descending (stalest first).
 > If empty: "All PRs have been reviewed."
@@ -316,6 +327,7 @@ Emojis are used **only** on section headings, not on summary line labels:
 | Health score | ❤️ (<40%) or 💛 (40-59%) or 💚 (≥60%) |
 | Abandoned PR marker | 💀 |
 | Stale PR marker | 🕸️ |
+| Has feedback (non-author comments) | 💬 |
 
 Summary labels (Ready, Review, LGTM needed, WIP, Hold, Rebase) use **bold** text only, no emojis.
 
@@ -348,12 +360,14 @@ Or if empty: `*🟢 Ready to Merge (0)* — None right now`
 
 **Block 6 — Needs Review** (`section` block, `mrkdwn`):
 ```
-*👀 Needs Review ({n})*
-• <url|#789> *repo* — Title · @author · _12d_ 🕸️
+*👀 Needs Review ({n} · {m} has feedback)*
+• <url|#789> *repo* — Title · @author · _12d_ 🕸️ 💬3
 • <url|#101> *repo* — Title · @author · _8d_
-• <url|#102> *repo* — Title · @author · _5d_
+• <url|#102> *repo* — Title · @author · _5d_ 💬1
 _...and {remaining} more_
 ```
+
+The heading shows how many PRs have non-author comment feedback. Each PR with feedback shows 💬N where N is the non-author comment count.
 
 **Block 7 — Divider**
 
@@ -411,6 +425,8 @@ Where:
 - **PR with null `updatedAt`**: Fall back to `createdAt` for staleness calculation.
 - **Labels with 10+ labels**: The API returns at most 10 labels. Classification uses only what is returned.
 - **PR matching multiple `do-not-merge/*` labels**: First-match-wins handles this — rule 2 (WIP) takes priority over rule 3 (Hold).
+- **PR with null `comments`**: Treat as no comments — `feedback_count = 0`, `has_feedback = false`.
+- **PR with 20+ comments**: Only the first 20 comments are fetched. Feedback count may be lower than actual, but presence detection is still accurate.
 
 ## Performance Notes
 

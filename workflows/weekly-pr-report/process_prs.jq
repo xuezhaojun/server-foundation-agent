@@ -22,6 +22,11 @@ def has_lgtm:
 def has_do_not_merge:
   .content.labels.nodes | map(.name) | any(startswith("do-not-merge/"));
 
+# Count comments from users other than the PR author
+def non_author_comment_count:
+  (.content.author.login // "unknown") as $author |
+  [(.content.comments.nodes // [])[] | select(.author.login != null and .author.login != $author)] | length;
+
 def days_since:
   ($today_sec - (.content.updatedAt | fromdateiso8601 | floor)) / 86400 | floor;
 
@@ -59,5 +64,7 @@ map(
   .title = .content.title |
   .url = .content.url |
   .number = .content.number |
-  .mergeable = .content.mergeable
+  .mergeable = .content.mergeable |
+  .feedback_count = non_author_comment_count |
+  .has_feedback = (.feedback_count > 0)
 )

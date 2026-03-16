@@ -23,7 +23,7 @@ def escape_mrkdwn(text):
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def format_pr_line(pr, show_stale_emoji=False):
+def format_pr_line(pr, show_stale_emoji=False, show_feedback=False):
     """Format a single PR as a Slack mrkdwn bullet line."""
     title = escape_mrkdwn(pr['title'])
     if len(title) > 50:
@@ -34,7 +34,10 @@ def format_pr_line(pr, show_stale_emoji=False):
             stale_emoji = " \U0001f480"
         elif pr['staleness'] in ['Stale', 'Very Stale', 'Aging']:
             stale_emoji = " \U0001f578\ufe0f"
-    return f"\u2022 <{pr['url']}|#{pr['number']}> *{pr['repo']}* \u2014 {title} \u00b7 @{pr['author']} \u00b7 _{pr['days']}d_{stale_emoji}"
+    feedback_marker = ""
+    if show_feedback and pr.get('has_feedback'):
+        feedback_marker = f" \U0001f4ac{pr.get('feedback_count', 0)}"
+    return f"\u2022 <{pr['url']}|#{pr['number']}> *{pr['repo']}* \u2014 {title} \u00b7 @{pr['author']} \u00b7 _{pr['days']}d_{stale_emoji}{feedback_marker}"
 
 
 def main():
@@ -132,8 +135,10 @@ def main():
     # Needs Review (stalest first)
     review_prs = sorted(categories['Needs Review'], key=lambda x: x['days'], reverse=True)
     if review_prs:
-        text = f"*\U0001f440 Needs Review ({n_review})*\n"
-        text += "\n".join([format_pr_line(pr, True) for pr in review_prs[:MAX_EXAMPLES]])
+        n_with_feedback = sum(1 for pr in review_prs if pr.get('has_feedback'))
+        feedback_note = f" · {n_with_feedback} has feedback" if n_with_feedback > 0 else ""
+        text = f"*\U0001f440 Needs Review ({n_review}{feedback_note})*\n"
+        text += "\n".join([format_pr_line(pr, True, True) for pr in review_prs[:MAX_EXAMPLES]])
         if n_review > MAX_EXAMPLES:
             text += f"\n_...and {n_review - MAX_EXAMPLES} more_"
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})

@@ -289,6 +289,13 @@ fetch_project_prs() {
                               name
                             }
                           }
+                          comments(first: 20) {
+                            nodes {
+                              author {
+                                login
+                              }
+                            }
+                          }
                           reviewDecision
                           isDraft
                           mergeable'

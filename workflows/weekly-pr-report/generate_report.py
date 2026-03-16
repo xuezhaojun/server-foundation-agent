@@ -123,10 +123,11 @@ def main():
                "These PRs have no approval or LGTM yet and need reviewer attention.", ""])
 
     if categories['Needs Review']:
-        md.append("| PR | Repository | Author | Title | Days since update | Staleness |")
-        md.append("|----|------------|--------|-------|--------------------|-----------|")
+        md.append("| PR | Repository | Author | Title | Days since update | Staleness | Feedback |")
+        md.append("|----|------------|--------|-------|--------------------|-----------|----------|")
         for pr in categories['Needs Review']:
-            md.append(format_pr_staleness(pr))
+            feedback = f"\U0001f4ac{pr.get('feedback_count', 0)}" if pr.get('has_feedback') else ""
+            md.append(f"| [#{pr['number']}]({pr['url']}) | {pr['repo']} | @{pr['author']} | {pr['title']} | {pr['days']} | {pr['staleness']} | {feedback} |")
     else:
         md.append("> All PRs have been reviewed.")
 
