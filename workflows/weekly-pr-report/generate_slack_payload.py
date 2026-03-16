@@ -11,6 +11,9 @@ import json
 import sys
 import datetime
 
+# Slack user group mention for Server Foundation team
+SF_GROUP_MENTION = "<!subteam^S04N59L7UPR|acm-server-foundation>"
+
 # Max example PRs to show per category
 MAX_EXAMPLES = 3
 
@@ -103,6 +106,7 @@ def main():
             "text": {
                 "type": "mrkdwn",
                 "text": (
+                    f"{SF_GROUP_MENTION}\n"
                     f"*Summary:* {total} open PRs \u00b7 {health_emoji} {health_pct}% healthy\n"
                     f"*Ready:* {n_ready}  \u00b7  *Review:* {n_review}  \u00b7  *LGTM needed:* {n_lgtm}\n"
                     f"*WIP:* {n_wip}  \u00b7  *Hold:* {n_hold}  \u00b7  *Rebase:* {n_rebase}"
