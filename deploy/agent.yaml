@@ -51,6 +51,9 @@ spec:
     - name: github-app
       secretRef:
         name: github-bot-credentials
+    - name: github-token
+      secretRef:
+        name: github-token
     - name: slack
       secretRef:
         name: slack-webhook-url
