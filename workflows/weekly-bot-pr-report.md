@@ -218,7 +218,7 @@ Failure patterns are defined in `workflows/weekly-bot-pr-report/failure-patterns
 |----|---------|-----------------|----------------|
 | FP-01 | [Go Version Mismatch](weekly-bot-pr-report/failure-patterns/01-go-version-mismatch.md) | `patched` | Yes |
 | FP-02 | [E2E Cluster Pool Claim](weekly-bot-pr-report/failure-patterns/02-e2e-cluster-pool.md) | `retest` | No |
-| FP-03 | [Build Failure](weekly-bot-pr-report/failure-patterns/03-build-failure.md) | `patched` | Yes |
+| FP-03 | [Locally Verifiable CI Failure](weekly-bot-pr-report/failure-patterns/03-build-failure.md) | `patched` | Yes |
 | FP-04 | [SonarCloud Code Analysis](weekly-bot-pr-report/failure-patterns/04-sonarcloud.md) | `patched` | Yes |
 
 To add a new failure pattern:
