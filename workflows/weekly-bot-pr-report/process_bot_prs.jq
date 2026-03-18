@@ -6,9 +6,8 @@
 # Input:  Raw JSON array from fetch-prs skill (detail level: all)
 # Output: Filtered array of open bot PRs with flat fields
 
-def is_bot:
-  .login as $l |
-  ($l == "red-hat-konflux" or $l == "dependabot" or $l == "renovate" or ($l | endswith("[bot]")) or ($l | endswith("-bot")));
+def is_konflux_bot:
+  .login == "red-hat-konflux";
 
 def days_since_created:
   ($today_sec - (.content.createdAt | fromdateiso8601 | floor)) / 86400 | floor;
@@ -24,7 +23,7 @@ def extract_branch:
     "unknown"
   end;
 
-map(select(.content.state == "OPEN" and (.content.author | is_bot))) |
+map(select(.content.state == "OPEN" and (.content.author | is_konflux_bot))) |
 map(
   .age_days = days_since_created |
   .author = (.content.author.login // "unknown") |

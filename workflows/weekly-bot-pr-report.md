@@ -1,7 +1,9 @@
 # Weekly Bot PR Report Workflow
 
-Analyze all open bot-submitted PRs on the Server Foundation project board, diagnose CI failures using
+Analyze all open Red Hat Konflux bot PRs on the Server Foundation project board, diagnose CI failures using
 failure pattern matching, attempt auto-fixes via sub-agents, and generate an actionable report.
+
+**Scope**: Only PRs authored by `red-hat-konflux` are included. Other bot PRs (dependabot, renovate, etc.) are excluded.
 
 ## Trigger Phrases
 
@@ -58,7 +60,7 @@ mkdir -p .output
 jq --argjson today_sec $(date +%s) -f workflows/weekly-bot-pr-report/process_bot_prs.jq <raw_prs.json> > .output/bot_prs.json
 ```
 
-The jq script keeps only open PRs authored by bots (red-hat-konflux, dependabot, renovate, `*[bot]`, `*-bot`) and produces flat fields: `.author`, `.repo`, `.short_repo`, `.title`, `.url`, `.number`, `.age_days`, `.branch`, `.is_fork`.
+The jq script keeps only open PRs authored by `red-hat-konflux` and produces flat fields: `.author`, `.repo`, `.short_repo`, `.title`, `.url`, `.number`, `.age_days`, `.branch`, `.is_fork`.
 
 ### 2.2 Collect CI Check Results
 
