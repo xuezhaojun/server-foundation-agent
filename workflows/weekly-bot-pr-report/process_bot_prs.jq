@@ -23,7 +23,13 @@ def extract_branch:
     "unknown"
   end;
 
-map(select(.content.state == "OPEN" and (.content.author | is_konflux_bot))) |
+def is_stolostron_org:
+  .content.repository.nameWithOwner | startswith("stolostron/");
+
+def has_ai_ignore_label:
+  any(.content.labels.nodes[]?; .name == "ai-ignore");
+
+map(select(.content.state == "OPEN" and (.content.author | is_konflux_bot) and is_stolostron_org and (has_ai_ignore_label | not))) |
 map(
   .age_days = days_since_created |
   .author = (.content.author.login // "unknown") |

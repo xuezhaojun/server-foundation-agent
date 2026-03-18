@@ -3,7 +3,7 @@
 Analyze all open Red Hat Konflux bot PRs on the Server Foundation project board, diagnose CI failures using
 failure pattern matching, attempt auto-fixes via sub-agents, and generate an actionable report.
 
-**Scope**: Only PRs authored by `red-hat-konflux` are included. Other bot PRs (dependabot, renovate, etc.) are excluded.
+**Scope**: Only PRs authored by `red-hat-konflux` under the `stolostron` org are included. PRs from `open-cluster-management` and other orgs are excluded. Other bot PRs (dependabot, renovate, etc.) are also excluded. PRs with the `ai-ignore` label are skipped.
 
 ## Trigger Phrases
 
