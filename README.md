@@ -39,9 +39,19 @@ Built on the **repo-as-agent** pattern: the repo **is** the agent. `README.md` d
 └─────────────────────────────────────────┘
 ```
 
-## Repos (Submodules)
+## Documentation Index
 
-The `repos/` directory contains all Server Foundation owned repositories as read-only git submodules. See [docs/repos.md](docs/repos.md) for the full list, MCE/ACM classification, and management instructions.
+The README is both a rule book and a directory. All detailed docs live under `docs/` and **MUST** be linked here. When adding or removing any doc file, update this table.
+
+| Document | Description |
+|----------|-------------|
+| [docs/repos.md](docs/repos.md) | SF repo inventory, MCE/ACM classification, submodule management |
+| [docs/releases.md](docs/releases.md) | Active release branches for MCE and ACM |
+| [docs/prow.md](docs/prow.md) | OpenShift CI (Prow) configuration guide |
+| [docs/build-mce-vs-acm.md](docs/build-mce-vs-acm.md) | MCE vs ACM build differences (Tekton, Dockerfile.rhtap, publish) |
+| [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email) |
+| [team-members/member-ownership.md](team-members/member-ownership.md) | Component/repository ownership mapping |
+| [deploy/README.md](deploy/README.md) | Deployment setup instructions |
 
 ## Git Commit Standards
 
@@ -76,12 +86,7 @@ python3 ... .output/slack_payload.json
 
 ## Team Member Information
 
-Team member info (names, GitHub usernames, emails) and component ownership data are stored locally in the `team-members/` directory at the project root:
-
-- `team-members/team-members.md` — Server Foundation team members and stakeholders (name, GitHub username, email)
-- `team-members/member-ownership.md` — Component/repository ownership mapping
-
-When you need to look up a team member's info or find who owns a component, read these files directly — no external API calls needed.
+Look up team members and component ownership in the files listed in the Documentation Index above. No external API calls needed.
 
 **Name matching notes:**
 - Users may use abbreviations or all lowercase (e.g., "zhiwei" = "Yin ZhiWei")
@@ -116,9 +121,6 @@ After this, entering the project directory will automatically export all secrets
 yq eval-all '.stringData // {} | to_entries[] | .key + "=" + "\"" + (.value | sub("\n$","") ) + "\""' deploy/secrets.yaml | grep -v '^---$' > .env
 ```
 
-## Deployment
-
-See [deploy/README.md](deploy/README.md) for setup instructions.
 
 ## Agent Context Convention
 
