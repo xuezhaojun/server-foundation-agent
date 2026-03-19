@@ -10,3 +10,5 @@
 
 # Intermediate build/run artifacts
 .output/
+
+workspace/
