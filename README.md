@@ -53,8 +53,13 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email) |
 | [team-members/member-ownership.md](team-members/member-ownership.md) | Component/repository ownership mapping |
 | [deploy/README.md](deploy/README.md) | Deployment setup instructions |
+| [docs/development-guide.md](docs/development-guide.md) | Development standards (commits, PRs, code style) |
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
 | [solutions/README.md](solutions/README.md) | Solutions catalog and index |
+
+## Development Standards (CRITICAL)
+
+**All development work MUST follow the [Development Guide](docs/development-guide.md).** This includes commit sign-off, PR templates, title conventions, code comment language, and fork workflow. The guide applies in all contexts: local, CI/CD, and cloud-hosted agent runs.
 
 ## Working with Code (CRITICAL)
 
@@ -73,17 +78,6 @@ The README is both a rule book and a directory. All detailed docs live under `do
 # WRONG: cloning upstream directly and pushing branches to it
 # WRONG: editing files directly in repos/
 ```
-
-## Git Commit Standards
-
-- Always sign off commits: `git commit -s -m "type(scope): description"`
-- Conventional commit types: `fix`, `feat`, `chore`, `docs`, `refactor`, `test`
-- Keep commit messages concise and descriptive
-
-## GitHub Interaction
-
-- Use `gh` CLI for all GitHub operations (PRs, issues, reviews)
-- Always include relevant labels on PRs
 
 ## Intermediate Artifacts
 
