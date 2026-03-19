@@ -57,12 +57,18 @@ The README is both a rule book and a directory. All detailed docs live under `do
 
 - **`repos/` is READ-ONLY.** Submodules under `repos/` are reference copies. NEVER modify files, create branches, or commit inside `repos/`. They exist only for reading and searching.
 - **All code changes MUST use a git worktree under `workspace/`.** When creating PRs or making changes to any SF repo, always clone/worktree into the `workspace/` directory. Use the [clone-worktree](.claude/skills/clone-worktree/SKILL.md) skill. The `workspace/` directory is git-ignored.
+- **Always use the fork workflow for PRs.** Clone from the current GitHub user's fork (not the upstream repo). Push to the fork, then create a PR from fork to upstream. Use `gh repo fork --clone=false` to ensure a fork exists, then clone the fork.
 
 ```bash
-# Correct: create a worktree for code changes
-# Use clone-worktree skill, working directory: workspace/<repo>/<branch>
+# Correct workflow:
+# 1. gh repo fork <upstream> --clone=false    (ensure fork exists)
+# 2. Clone YOUR fork into workspace/
+# 3. Add upstream as remote
+# 4. Make changes, commit, push to fork
+# 5. gh pr create against upstream
 
-# WRONG: never edit files directly in repos/
+# WRONG: cloning upstream directly and pushing branches to it
+# WRONG: editing files directly in repos/
 ```
 
 ## Git Commit Standards
