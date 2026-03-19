@@ -72,3 +72,10 @@ Use the helper script to manage submodules:
 | [openshift/release](https://github.com/openshift/release) | OpenShift CI release configuration (prow jobs, configs) |
 | [stolostron/konflux-build-catalog](https://github.com/stolostron/konflux-build-catalog) | Konflux build catalog for stolostron |
 | [stolostron/acm-infra](https://github.com/stolostron/acm-infra) | ACM infrastructure and build tooling |
+
+## Documentation (`repos/docs/`)
+
+| Repository | Description |
+|------------|-------------|
+| [open-cluster-management-io.github.io](https://github.com/open-cluster-management-io/open-cluster-management-io.github.io) | OCM community documentation site |
+| [rhacm-docs](https://github.com/stolostron/rhacm-docs) | Red Hat Advanced Cluster Management product documentation |

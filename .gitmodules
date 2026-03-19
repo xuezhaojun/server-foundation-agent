@@ -61,3 +61,9 @@
 [submodule "repos/build/stolostron/acm-infra"]
 	path = repos/build/stolostron/acm-infra
 	url = https://github.com/stolostron/acm-infra.git
+[submodule "repos/docs/open-cluster-management-io/open-cluster-management-io.github.io"]
+	path = repos/docs/open-cluster-management-io/open-cluster-management-io.github.io
+	url = https://github.com/open-cluster-management-io/open-cluster-management-io.github.io.git
+[submodule "repos/docs/stolostron/rhacm-docs"]
+	path = repos/docs/stolostron/rhacm-docs
+	url = https://github.com/stolostron/rhacm-docs.git
