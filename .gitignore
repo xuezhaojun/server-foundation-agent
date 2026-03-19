@@ -7,8 +7,6 @@
 .env
 .envrc
 
-# Cloned repositories and worktrees
-repos/
 
 # Intermediate build/run artifacts
 .output/

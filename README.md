@@ -39,6 +39,10 @@ Built on the **repo-as-agent** pattern: the repo **is** the agent. `README.md` d
 └─────────────────────────────────────────┘
 ```
 
+## Repos (Submodules)
+
+The `repos/` directory contains all Server Foundation owned repositories as read-only git submodules. See [docs/repos.md](docs/repos.md) for the full list, MCE/ACM classification, and management instructions.
+
 ## Git Commit Standards
 
 - Always sign off commits: `git commit -s -m "type(scope): description"`
