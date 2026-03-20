@@ -12,3 +12,6 @@
 .output/
 
 workspace/
+
+# Claude Code
+.claude/scheduled_tasks.lock
