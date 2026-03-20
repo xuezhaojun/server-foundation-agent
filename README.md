@@ -22,22 +22,7 @@ See [`solutions/README.md`](solutions/README.md) for the full solutions catalog.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────┐
-│  server-foundation namespace            │
-│                                         │
-│  ┌───────────────────────────────────┐  │
-│  │  Agent: server-foundation-agent   │  │
-│  │  (repo-as-agent)                  │  │
-│  └───────────────────────────────────┘  │
-│  ┌───────────────────────────────────┐  │
-│  │  CronJob: weekly-pr-report-cron   │  │
-│  └───────────────────────────────────┘  │
-│  ┌───────────────────────────────────┐  │
-│  │  Tasks (created by CronJobs)      │  │
-│  └───────────────────────────────────┘  │
-└─────────────────────────────────────────┘
-```
+See [docs/deployment.md](docs/deployment.md) for architecture diagram, cluster deployment, and local development setup.
 
 ## Documentation Index
 
@@ -52,7 +37,8 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [docs/repo-dependencies.md](docs/repo-dependencies.md) | SF repo dependency relationships and upgrade guidance |
 | [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email) |
 | [team-members/member-ownership.md](team-members/member-ownership.md) | Component/repository ownership mapping |
-| [deploy/README.md](deploy/README.md) | Deployment setup instructions |
+| [docs/deployment.md](docs/deployment.md) | Architecture, cluster deployment, and local development |
+| [deploy/README.md](deploy/README.md) | Cluster deployment setup (secrets, kustomize, monitoring) |
 | [docs/development-guide.md](docs/development-guide.md) | Development standards (commits, PRs, code style) |
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
 | [solutions/README.md](solutions/README.md) | Solutions catalog and index |
@@ -72,11 +58,26 @@ The README is both a rule book and a directory. All detailed docs live under `do
 # 1. gh repo fork <upstream> --clone=false    (ensure fork exists)
 # 2. Clone YOUR fork into workspace/
 # 3. Add upstream as remote
-# 4. Make changes, commit, push to fork
-# 5. gh pr create against upstream
+# 4. Create branch FROM UPSTREAM's target branch (not fork's main)
+# 5. Make changes, commit, push to fork
+# 6. gh pr create against upstream
 
 # WRONG: cloning upstream directly and pushing branches to it
 # WRONG: editing files directly in repos/
+# WRONG: creating branch from fork's main (it may have diverged from upstream)
+```
+
+- **Branch from the correct upstream.** SF repos exist in two GitHub orgs: `open-cluster-management-io` (OCM community) and `stolostron` (Red Hat downstream). Their `main` branches **diverge** — stolostron repos contain extra files (`.tekton/`, `Dockerfile.rhtap`, etc.) that don't exist in OCM-IO. When creating a PR, always checkout the feature branch from the **target repo's branch** (e.g., `git checkout -b feature upstream/main`), NOT from the fork's `main`. Otherwise the PR diff will include unrelated commits from the diverged fork.
+
+```bash
+# Example: PR targeting open-cluster-management-io/cluster-permission
+git clone https://github.com/<your-fork>/cluster-permission.git
+cd cluster-permission
+git remote add upstream https://github.com/open-cluster-management-io/cluster-permission.git
+git fetch upstream main
+git checkout -b my-feature upstream/main   # Branch from UPSTREAM, not origin/main
+# ... make changes, commit, push to origin ...
+gh pr create --repo open-cluster-management-io/cluster-permission --head <user>:my-feature
 ```
 
 ## Intermediate Artifacts
@@ -106,36 +107,6 @@ Look up team members and component ownership in the files listed in the Document
 **Name matching notes:**
 - Users may use abbreviations or all lowercase (e.g., "zhiwei" = "Yin ZhiWei")
 - Chinese and English name orders may differ (e.g., "Zhao Xue" and "Xue Zhao" are the same person)
-
-## Local Development
-
-To run the agent locally with the same secrets used in the cluster, use [direnv](https://direnv.net/) to auto-load environment variables from `deploy/secrets.yaml`.
-
-**Setup (one-time):**
-
-```bash
-# 1. Install direnv
-brew install direnv
-
-# 2. Add hook to your shell (zsh)
-echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
-source ~/.zshrc
-
-# 3. Generate .env from K8s secrets
-yq eval-all '.stringData // {} | to_entries[] | .key + "=" + "\"" + (.value | sub("\n$","") ) + "\""' deploy/secrets.yaml | grep -v '^---$' > .env
-
-# 4. Allow direnv for this directory
-direnv allow
-```
-
-After this, entering the project directory will automatically export all secrets as environment variables. The `.env` and `.envrc` files are git-ignored.
-
-**Regenerate after secrets change:**
-
-```bash
-yq eval-all '.stringData // {} | to_entries[] | .key + "=" + "\"" + (.value | sub("\n$","") ) + "\""' deploy/secrets.yaml | grep -v '^---$' > .env
-```
-
 
 ## Agent Context Convention
 
