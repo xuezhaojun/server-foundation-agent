@@ -2,11 +2,11 @@
 
 ## Version Unification (2.17+)
 
-Starting from **2.17**, MCE and ACM versions are unified. There is no separate `backplane-2.12` or MCE 2.12 — the unified versioning begins at 2.17. Both MCE and ACM repos use `release-2.17` branches going forward.
+Starting from **2.17**, MCE and ACM version numbers are unified — both use 2.17 instead of separate numbering. However, branch **prefixes** remain distinct: MCE repos still use `backplane-*` and ACM repos still use `release-*`.
 
-## MCE (Multicluster Engine) — `backplane-*` branches (legacy, ≤ 2.11)
+## MCE (Multicluster Engine) — `backplane-*` branches
 
-MCE components use `backplane-X.Y` branches. These branches are legacy; no new `backplane-*` branches will be created after 2.11.
+MCE components use `backplane-X.Y` branches.
 
 | Branch | Status |
 |--------|--------|
@@ -15,6 +15,7 @@ MCE components use `backplane-X.Y` branches. These branches are legacy; no new `
 | backplane-2.9 | Active |
 | backplane-2.10 | Active |
 | backplane-2.11 | Active |
+| backplane-2.17 | Latest (fast-forwarded from main) |
 
 ### Per-repo notes
 
@@ -22,7 +23,7 @@ MCE components use `backplane-X.Y` branches. These branches are legacy; no new `
 
 ## ACM (Advanced Cluster Management) — `release-*` branches
 
-ACM components use `release-X.Y` branches. MCE is a subset of ACM. Starting from 2.17, MCE repos also use `release-*` branches.
+ACM components use `release-X.Y` branches. MCE is a subset of ACM.
 
 | Branch | Status |
 |--------|--------|
@@ -31,9 +32,35 @@ ACM components use `release-X.Y` branches. MCE is a subset of ACM. Starting from
 | release-2.14 | Active |
 | release-2.15 | Active |
 | release-2.16 | Active |
-| release-2.17 | Latest (unified MCE + ACM) |
-| main | Development (fast-forwards to next release) |
+| release-2.17 | Latest (fast-forwarded from main) |
+| main | Development (fast-forwards to latest release branch) |
 
 ### Per-repo notes
 
 - **multicluster-role-assignment** — newer component, active branches: release-2.15 ~ 2.16 only
+
+## Fast-Forward Mechanism
+
+Changes are committed **only to `main`** for current development. The `main` branch is then **automatically fast-forwarded** to the latest branch of each type. This means you should **never commit directly** to the latest release/backplane branch — it receives updates from `main` automatically.
+
+## Maintenance Branch Ranges
+
+When doing maintenance work (e.g., dependency upgrades) "from branch X to main", you must submit changes to **every active branch in the range**, but **skip the latest branch** because it is fast-forwarded from `main`.
+
+**Current fast-forward targets** (skip these — they sync from `main` automatically):
+- MCE repos: `backplane-2.17`
+- ACM repos: `release-2.17`
+
+### MCE repos (backplane-* branches only)
+
+"From backplane-2.7 to main" means: `backplane-2.7`, `2.8`, `2.9`, `2.10`, `2.11`, `main`
+(skip `backplane-2.17`)
+
+### ACM repos (release-* branches only)
+
+"From release-2.12 to main" means: `release-2.12`, `2.13`, `2.14`, `2.15`, `2.16`, `main`
+(skip `release-2.17`)
+
+### Special repos (both backplane-* and release-* branches)
+
+Some repos (e.g., **cluster-permission**, which moved from ACM to MCE) have both branch types. In that case, submit to all applicable branches in both ranges, still skipping the fast-forward target.

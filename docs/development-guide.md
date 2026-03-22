@@ -77,6 +77,22 @@ Choose the correct target org based on the task type:
 
 When the target is ambiguous, ask before proceeding — do not assume.
 
+## Maintenance Across Branches
+
+When doing maintenance work (dependency upgrades, CI fixes, etc.) across multiple release branches, the instruction is typically phrased as "from X to main" (e.g., "from backplane-2.7 to main"). This means submitting the change to **every active branch in the range**.
+
+### Fast-forward rule
+
+The `main` branch automatically fast-forwards to the **latest release branch** (see [releases.md](releases.md) for the current target). You must **skip that branch** — it receives updates from `main` automatically. Never commit directly to the fast-forward target branch.
+
+### Branch range by repo type
+
+- **MCE repos** have `backplane-*` branches only (no `release-*`)
+- **ACM repos** have `release-*` branches only (no `backplane-*`)
+- **Special repos** (e.g., cluster-permission) may have both
+
+See [releases.md](releases.md) for the full active branch list and concrete examples.
+
 ## GitHub Interaction
 
 - Use `gh` CLI for all GitHub operations (PRs, issues, reviews).
