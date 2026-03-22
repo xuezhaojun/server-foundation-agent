@@ -34,6 +34,7 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [docs/releases.md](docs/releases.md) | Active release branches for MCE and ACM |
 | [docs/prow.md](docs/prow.md) | OpenShift CI (Prow) configuration guide |
 | [docs/build-mce-vs-acm.md](docs/build-mce-vs-acm.md) | MCE vs ACM build differences (Tekton, Dockerfile.rhtap, publish) |
+| [docs/jira.md](docs/jira.md) | Jira integration: auth, custom fields, workflow, REST API reference |
 | [docs/repo-dependencies.md](docs/repo-dependencies.md) | SF repo dependency relationships and upgrade guidance |
 | [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email) |
 | [team-members/member-ownership.md](team-members/member-ownership.md) | Component/repository ownership mapping |
