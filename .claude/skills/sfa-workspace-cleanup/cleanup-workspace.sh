@@ -109,7 +109,7 @@ check_and_clean() {
     log_info "  Repo: $repo_full, Branch: $branch"
 
     # Search for PR — by number if available, otherwise by head branch
-    local pr_info
+    local pr_info=""
     if [ -n "$pr_number" ]; then
         pr_info=$(gh pr view "$pr_number" -R "$repo_full" --json number,state,title 2>/dev/null)
         if [ $? -ne 0 ] || [ -z "$pr_info" ]; then
@@ -187,6 +187,46 @@ for org_dir in "$WORKSPACE_DIR"/*/; do
             fi
         done
     done
+done
+
+# --- Clean up empty worktree dirs and bare repos ---
+for org_dir in "$WORKSPACE_DIR"/*/; do
+    [ -d "$org_dir" ] || continue
+
+    for worktrees_dir in "$org_dir"*-worktrees/; do
+        [ -d "$worktrees_dir" ] || continue
+
+        # Check if the worktrees dir is empty (no subdirectories)
+        local_name=$(basename "$worktrees_dir" | sed 's/-worktrees$//')
+        bare_dir="${org_dir}${local_name}.git"
+        remaining=$(find "$worktrees_dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
+
+        if [ "$remaining" -eq 0 ]; then
+            if [ "$DRY_RUN" = "true" ]; then
+                log_action "[DRY-RUN] Would remove empty worktrees dir: $worktrees_dir"
+                [ -d "$bare_dir" ] && log_action "[DRY-RUN] Would remove bare repo: $bare_dir"
+            else
+                log_action "Removing empty worktrees dir: $worktrees_dir"
+                rm -rf "$worktrees_dir"
+                if [ -d "$bare_dir" ]; then
+                    log_action "Removing bare repo: $bare_dir"
+                    rm -rf "$bare_dir"
+                fi
+            fi
+            cleaned=$((cleaned + 1))
+        fi
+    done
+
+    # Remove org dir if now empty
+    remaining=$(find "$org_dir" -mindepth 1 -maxdepth 1 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$remaining" -eq 0 ]; then
+        if [ "$DRY_RUN" = "true" ]; then
+            log_action "[DRY-RUN] Would remove empty org dir: $org_dir"
+        else
+            log_action "Removing empty org dir: $org_dir"
+            rmdir "$org_dir"
+        fi
+    fi
 done
 
 # --- Scan legacy plain clones: workspace/<name>/ ---
