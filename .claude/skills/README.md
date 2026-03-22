@@ -9,6 +9,10 @@ Skills are task-specific workflows the agent can execute. Each skill has a step-
 | [clone-worktree](clone-worktree/SKILL.md) | Clone a repo and create a worktree for a PR or new branch (MUST use for all workspace checkouts) | On demand |
 | [cleanup-workspace](cleanup-workspace/SKILL.md) | Remove workspace worktrees/clones whose PRs are merged/closed | On demand |
 | [sync-repos](sync-repos/SKILL.md) | Initialize or update all submodules under repos/ to latest | On demand |
+| [jira-search](jira-search/SKILL.md) | Search/list Jira issues for the SF team (supports team-wide and per-member queries) | On demand |
+| [jira-create](jira-create/SKILL.md) | Create Jira issues in the ACM project with SF defaults | On demand |
+| [jira-update](jira-update/SKILL.md) | Update Jira issue status (workflow transitions) and fields | On demand |
+| [jira-comment](jira-comment/SKILL.md) | Add comments to Jira issues (PR links, progress updates) | On demand |
 
 ## Adding a New Skill
 
