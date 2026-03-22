@@ -98,3 +98,4 @@ See [releases.md](releases.md) for the full active branch list and concrete exam
 - Use `gh` CLI for all GitHub operations (PRs, issues, reviews).
 - When assigning PRs or issues, use the comment format `/assign @<username>` to trigger CI automation.
 - Check for existing related issues or PRs before creating new ones to avoid duplicates.
+- CI checks are integrated with OpenShift CI (Prow) and GitHub. To retest flaky or failed checks, comment `/retest` on the PR to re-trigger all failed tests, or `/retest <test-name>` to re-trigger a specific one.
