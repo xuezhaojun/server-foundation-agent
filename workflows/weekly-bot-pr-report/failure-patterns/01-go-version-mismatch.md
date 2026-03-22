@@ -24,9 +24,9 @@ A bot PR updates `go.mod` with a new Go directive version (e.g., `go 1.22` to `g
 
 ## Fix Procedure
 
-1. Clone the PR branch using the `clone-worktree` skill:
+1. Clone the PR branch using the `sfa-workspace-clone` skill:
    ```bash
-   WORKTREE=$(.claude/skills/clone-worktree/clone-worktree.sh <org/repo> <pr-number>)
+   WORKTREE=$(.claude/skills/sfa-workspace-clone/clone-worktree.sh <org/repo> <pr-number>)
    cd "$WORKTREE"
    ```
 
@@ -49,7 +49,7 @@ A bot PR updates `go.mod` with a new Go directive version (e.g., `go 1.22` to `g
 
 6. Clean up the worktree:
    ```bash
-   .claude/skills/clone-worktree/clone-worktree.sh --remove <org/repo> <pr-number>
+   .claude/skills/sfa-workspace-clone/clone-worktree.sh --remove <org/repo> <pr-number>
    ```
 
 ## Verification

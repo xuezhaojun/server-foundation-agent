@@ -14,7 +14,7 @@ failure pattern matching, attempt auto-fixes via sub-agents, and generate an act
 
 ```
 Phase 1: Collect    →  Phase 2: Classify     →  Phase 3: Diagnose      →  Phase 4: Report    →  Phase 5: Distribute
-fetch-prs skill        jq + collect_checks      sub-agents per PR          generate Markdown       slack-notify
+sfa-github-fetch-prs skill        jq + collect_checks      sub-agents per PR          generate Markdown       sfa-slack-notify
 ```
 
 ---
@@ -41,11 +41,11 @@ workflows/weekly-bot-pr-report/
 
 ## Phase 1: Collect PR Data
 
-Use the `fetch-prs` skill with `all` detail level to get full PR lifecycle data.
+Use the `sfa-github-fetch-prs` skill with `all` detail level to get full PR lifecycle data.
 
 This returns a JSON array. Save it to a temp file for Phase 2.
 
-**Dependency**: `.claude/skills/fetch-prs/SKILL.md`
+**Dependency**: `.claude/skills/sfa-github-fetch-prs/SKILL.md`
 
 ---
 
@@ -103,7 +103,7 @@ Each sub-agent:
 2. Reads `workflows/weekly-bot-pr-report/diagnose_pr.md` for its instructions
 3. Applies failure patterns from `workflows/weekly-bot-pr-report/failure-patterns/` **in order** (FP-01 → FP-02 → FP-03 → FP-04)
 4. First match wins — stops checking after a pattern matches
-5. For patterns requiring clone (FP-01, FP-03): uses the `clone-worktree` skill to check out code, attempt fix, push patch
+5. For patterns requiring clone (FP-01, FP-03): uses the `sfa-workspace-clone` skill to check out code, attempt fix, push patch
 6. Writes result to `.output/diagnoses/pr-<NUMBER>.json`
 
 ### Spawning Sub-Agents
@@ -187,12 +187,12 @@ Generate the Slack payload and send it:
 
 ```bash
 python3 workflows/weekly-bot-pr-report/generate_slack_payload.py .output/diagnoses/ .output/bot_slack_payload.json
-bash .claude/skills/slack-notify/send_to_slack.sh .output/bot_slack_payload.json
+bash .claude/skills/sfa-slack-notify/send_to_slack.sh .output/bot_slack_payload.json
 ```
 
 **Dependencies**:
 - `workflows/weekly-bot-pr-report/generate_slack_payload.py`
-- `.claude/skills/slack-notify/send_to_slack.sh`
+- `.claude/skills/sfa-slack-notify/send_to_slack.sh`
 
 ### Slack Message Structure
 
@@ -244,4 +244,4 @@ To add a new failure pattern:
 - Phase 2 makes one `gh pr checks` call per PR — runs sequentially to avoid GitHub API rate limiting
 - Phase 3 sub-agents run in parallel (up to 3-5 concurrent) for faster diagnosis
 - Use `gh pr diff --name-only` (not full diff) to minimize API data transfer in sub-agents
-- Cache from `fetch-prs` skill is reused if within TTL — do NOT use `nocache` unless user requests it
+- Cache from `sfa-github-fetch-prs` skill is reused if within TTL — do NOT use `nocache` unless user requests it

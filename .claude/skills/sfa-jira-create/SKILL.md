@@ -1,5 +1,5 @@
 ---
-name: jira-create
+name: sfa-jira-create
 description: "Create Jira issues in the ACM project on Red Hat Jira Cloud (redhat.atlassian.net) for the Server Foundation team. Use this skill when the user wants to create a new Jira issue, file a bug, create a task/story/epic/feature, or says things like 'create a jira', 'file a bug', 'new jira issue', 'open a ticket', 'track this in jira'. Also trigger when the user describes a problem or feature and asks to track it."
 ---
 
@@ -141,10 +141,10 @@ Provide the browse URL: `https://redhat.atlassian.net/browse/<NEW-ISSUE-KEY>`
 
 ```
 # Full example
-/jira-create --type task --summary "Fix cluster-proxy cert rotation" --affects-version "MCE 2.14.0" --fix-version "MCE 2.14.0" --assignee zhiwei --link ACM-29991
+/sfa-jira-create --type task --summary "Fix cluster-proxy cert rotation" --affects-version "MCE 2.14.0" --fix-version "MCE 2.14.0" --assignee zhiwei --link ACM-29991
 
 # Minimal (will prompt for versions)
-/jira-create --type bug --summary "Proxy agent crash on restart"
+/sfa-jira-create --type bug --summary "Proxy agent crash on restart"
 
 # Natural language
 Create a jira bug for the cluster-proxy crash issue, affects MCE 2.14.0, assign to zhiwei

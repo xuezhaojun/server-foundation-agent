@@ -1,5 +1,5 @@
 ---
-name: clone-worktree
+name: sfa-workspace-clone
 description: "Clone a repository and create a git worktree for a specific PR branch or a new development branch. MUST be used for ALL workspace operations — never use plain 'git clone' into workspace/. Use this skill when you need to check out PR code locally, or start new development on any SF repo. Trigger phrases: 'clone worktree', 'checkout PR', 'clone PR', 'worktree for PR', 'fix PR', 'new branch', 'start development'."
 ---
 
@@ -14,7 +14,7 @@ This skill clones a GitHub repository (as a bare repo) and creates a git worktre
 ### 1. PR Mode (default) — Check out an existing PR
 
 ```bash
-.claude/skills/clone-worktree/clone-worktree.sh <org/repo> <pr-number>
+.claude/skills/sfa-workspace-clone/clone-worktree.sh <org/repo> <pr-number>
 ```
 
 ### 2. New Branch Mode — Start new development
@@ -23,16 +23,16 @@ Uses the fork workflow automatically: ensures fork exists, branches from upstrea
 
 ```bash
 # Branch from main (default)
-.claude/skills/clone-worktree/clone-worktree.sh --new <org/repo> <branch-name>
+.claude/skills/sfa-workspace-clone/clone-worktree.sh --new <org/repo> <branch-name>
 
 # Branch from a specific base branch
-.claude/skills/clone-worktree/clone-worktree.sh --new <org/repo> <branch-name> --base release-2.14
+.claude/skills/sfa-workspace-clone/clone-worktree.sh --new <org/repo> <branch-name> --base release-2.14
 ```
 
 ### 3. Remove Mode — Clean up a worktree
 
 ```bash
-.claude/skills/clone-worktree/clone-worktree.sh --remove <org/repo> <pr-number|branch-name>
+.claude/skills/sfa-workspace-clone/clone-worktree.sh --remove <org/repo> <pr-number|branch-name>
 ```
 
 ## Directory Layout

@@ -1,5 +1,5 @@
 ---
-name: jira-search
+name: sfa-jira-search
 description: "Search and list Jira issues for the Server Foundation team from the ACM project on Red Hat Jira Cloud (redhat.atlassian.net). Use this skill when the user wants to search, list, view, or check Jira issues for the team or a specific team member. Trigger phrases: 'list jiras', 'search jira', 'show jiras', 'team jiras', 'jira issues', 'what jiras does X have', 'show SF jira backlog', 'jira sprint status'. Supports filtering by assignee, status, type, sprint, component, and more."
 ---
 
@@ -142,16 +142,16 @@ Display as a **markdown table** with columns: Type, Key, Summary, Status, Priori
 
 ```
 # List my open jiras (default)
-/jira-search
+/sfa-jira-search
 
 # Show all SF team issues in current sprint
-/jira-search --assignee team --sprint current
+/sfa-jira-search --assignee team --sprint current
 
 # What bugs does zhiwei have?
-/jira-search --assignee zhiwei --type Bug
+/sfa-jira-search --assignee zhiwei --type Bug
 
 # Show team's in-progress work
-/jira-search --assignee team --status "In Progress"
+/sfa-jira-search --assignee team --status "In Progress"
 
 # Natural language
 Show me qiujian's open jiras

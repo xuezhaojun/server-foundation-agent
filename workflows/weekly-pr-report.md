@@ -12,7 +12,7 @@ The report helps the team identify merge-ready PRs, stale PRs, conflicts, and bo
 
 ```
 Phase 1: Collect    →  Phase 2: Process    →  Phase 3: Report    →  Phase 4: Distribute
-fetch-prs skill        filter & classify       generate Markdown       slack-notify
+sfa-github-fetch-prs skill        filter & classify       generate Markdown       sfa-slack-notify
 ```
 
 ---
@@ -32,11 +32,11 @@ workflows/weekly-pr-report/
 
 ## Phase 1: Collect PR Data
 
-Use the `fetch-prs` skill with `all` detail level to get full PR lifecycle data.
+Use the `sfa-github-fetch-prs` skill with `all` detail level to get full PR lifecycle data.
 
 This returns a JSON array. Save it to a temp file for Phase 2.
 
-**Dependency**: `.claude/skills/fetch-prs/SKILL.md`
+**Dependency**: `.claude/skills/sfa-github-fetch-prs/SKILL.md`
 
 ---
 
@@ -279,12 +279,12 @@ Run the bundled script to generate the Slack payload, then send it:
 
 ```bash
 python3 workflows/weekly-pr-report/generate_slack_payload.py .output/processed_prs.json .output/slack_payload.json
-bash .claude/skills/slack-notify/send_to_slack.sh .output/slack_payload.json
+bash .claude/skills/sfa-slack-notify/send_to_slack.sh .output/slack_payload.json
 ```
 
 **Dependencies**:
 - `workflows/weekly-pr-report/generate_slack_payload.py`
-- `.claude/skills/slack-notify/send_to_slack.sh`
+- `.claude/skills/sfa-slack-notify/send_to_slack.sh`
 
 ### Slack Message Design Principles
 
@@ -430,6 +430,6 @@ Where:
 
 ## Performance Notes
 
-- The `fetch-prs` skill call may take a few seconds for the initial API call; subsequent calls use the 5-minute cache
+- The `sfa-github-fetch-prs` skill call may take a few seconds for the initial API call; subsequent calls use the 5-minute cache
 - All filtering, classification, and aggregation should be done with `jq` in a single pass when possible
 - Do NOT use `nocache` unless the user explicitly requests fresh data

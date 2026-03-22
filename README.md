@@ -31,9 +31,8 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | Document | Description |
 |----------|-------------|
 | [docs/repos.md](docs/repos.md) | SF repo inventory, MCE/ACM classification, submodule management |
-| [docs/releases.md](docs/releases.md) | Active release branches for MCE and ACM |
+| [docs/build-release.md](docs/build-release.md) | Build & release: active branches, MCE vs ACM build differences |
 | [docs/prow.md](docs/prow.md) | OpenShift CI (Prow) configuration guide |
-| [docs/build-mce-vs-acm.md](docs/build-mce-vs-acm.md) | MCE vs ACM build differences (Tekton, Dockerfile.rhtap, publish) |
 | [docs/jira.md](docs/jira.md) | Jira integration: auth, custom fields, workflow, REST API reference |
 | [docs/repo-dependencies.md](docs/repo-dependencies.md) | SF repo dependency relationships and upgrade guidance |
 | [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email) |
@@ -51,9 +50,9 @@ The README is both a rule book and a directory. All detailed docs live under `do
 ## Working with Code (CRITICAL)
 
 - **`repos/` is READ-ONLY.** Submodules under `repos/` are reference copies. NEVER modify files, create branches, or commit inside `repos/`. They exist only for reading and searching.
-- **All code checkouts MUST use the [clone-worktree](.claude/skills/clone-worktree/SKILL.md) skill.** NEVER use plain `git clone` into `workspace/`. The clone-worktree skill uses bare repos + worktrees, which enables concurrent development on multiple branches of the same repo and supports automated cleanup. The `workspace/` directory is git-ignored.
-  - **Checking out a PR:** `.claude/skills/clone-worktree/clone-worktree.sh <org/repo> <pr-number>`
-  - **Starting new development:** `.claude/skills/clone-worktree/clone-worktree.sh --new <org/repo> <branch-name> [--base <base-branch>]`
+- **All code checkouts MUST use the [sfa-workspace-clone](.claude/skills/sfa-workspace-clone/SKILL.md) skill.** NEVER use plain `git clone` into `workspace/`. The sfa-workspace-clone skill uses bare repos + worktrees, which enables concurrent development on multiple branches of the same repo and supports automated cleanup. The `workspace/` directory is git-ignored.
+  - **Checking out a PR:** `.claude/skills/sfa-workspace-clone/clone-worktree.sh <org/repo> <pr-number>`
+  - **Starting new development:** `.claude/skills/sfa-workspace-clone/clone-worktree.sh --new <org/repo> <branch-name> [--base <base-branch>]`
 - **Always use the fork workflow for PRs.** The `--new` mode automates this: it ensures your fork exists, branches from upstream, and configures push to your fork. For PR mode, push goes to the upstream repo's branch.
 
 ```bash

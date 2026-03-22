@@ -1,5 +1,5 @@
 ---
-name: jira-update
+name: sfa-jira-update
 description: "Update Jira issue status, fields, or perform workflow transitions on Red Hat Jira Cloud (redhat.atlassian.net). Use this skill when the user wants to change a Jira issue's status (e.g., 'move to In Progress', 'mark as Review'), update fields (priority, assignee, summary), or says things like 'update jira', 'transition jira', 'move jira to review', 'change status', 'assign jira to X', 'start working on ACM-12345'."
 ---
 
@@ -131,20 +131,20 @@ Users often express transitions naturally:
 | "assign ACM-12345 to zhiwei" | Update assignee |
 | "PR is merged, update ACM-12345" | Transition to Resolved + add comment |
 
-When the user says "PR is merged, update jira", also trigger the `jira-comment` skill to add a PR link comment.
+When the user says "PR is merged, update jira", also trigger the `sfa-jira-comment` skill to add a PR link comment.
 
 ## Examples
 
 ```
 # Transition status
-/jira-update --issue-key ACM-12345 --status "In Progress"
-/jira-update --issue-key ACM-12345 --status Review
+/sfa-jira-update --issue-key ACM-12345 --status "In Progress"
+/sfa-jira-update --issue-key ACM-12345 --status Review
 
 # Update assignee
-/jira-update --issue-key ACM-12345 --assignee zhiwei
+/sfa-jira-update --issue-key ACM-12345 --assignee zhiwei
 
 # Multiple updates
-/jira-update --issue-key ACM-12345 --status Review --priority Critical
+/sfa-jira-update --issue-key ACM-12345 --status Review --priority Critical
 
 # Natural language
 Move ACM-12345 to review

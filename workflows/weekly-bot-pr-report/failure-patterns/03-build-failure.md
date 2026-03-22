@@ -31,9 +31,9 @@ Covers all CI checks that the agent can reproduce and fix locally: build, unit t
 
 ### Step 1: Clone
 
-Clone the PR branch using the `clone-worktree` skill:
+Clone the PR branch using the `sfa-workspace-clone` skill:
 ```bash
-WORKTREE=$(.claude/skills/clone-worktree/clone-worktree.sh <org/repo> <pr-number>)
+WORKTREE=$(.claude/skills/sfa-workspace-clone/clone-worktree.sh <org/repo> <pr-number>)
 cd "$WORKTREE"
 ```
 
@@ -280,7 +280,7 @@ If **no** category was fixed (all still fail), do NOT push. Record as `needs-man
 
 Always clean up the worktree, whether the fix succeeded or failed:
 ```bash
-.claude/skills/clone-worktree/clone-worktree.sh --remove <org/repo> <pr-number>
+.claude/skills/sfa-workspace-clone/clone-worktree.sh --remove <org/repo> <pr-number>
 ```
 
 ## Fallback

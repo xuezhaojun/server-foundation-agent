@@ -1,5 +1,5 @@
 ---
-name: fetch-prs
+name: sfa-github-fetch-prs
 description: "Fetch/Get/View all active(open) pull requests of sf(server foundation) team. For example: `How many sf PRs opened today?` sometimes user may omit `sf`, directly say `How many PRs opened today?`, if user's context does not contain any other PR related information, then it is assumed that the user intends to query the PRs of the sf team."
 ---
 

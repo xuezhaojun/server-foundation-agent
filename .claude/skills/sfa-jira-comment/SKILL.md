@@ -1,5 +1,5 @@
 ---
-name: jira-comment
+name: sfa-jira-comment
 description: "Add comments to Jira issues on Red Hat Jira Cloud (redhat.atlassian.net). Use this skill when the user wants to add a comment, post a PR link, update progress, or log notes on a Jira issue. Trigger phrases: 'comment on jira', 'add jira comment', 'post PR to jira', 'update jira with PR', 'log progress on ACM-12345', 'link PR to jira'. Also trigger automatically when a PR is created and a Jira issue key is mentioned."
 ---
 
@@ -115,10 +115,10 @@ curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
 
 ```
 # Add a PR link comment
-/jira-comment --issue-key ACM-12345 --pr-url https://github.com/stolostron/cluster-proxy/pull/99
+/sfa-jira-comment --issue-key ACM-12345 --pr-url https://github.com/stolostron/cluster-proxy/pull/99
 
 # Free-form comment
-/jira-comment --issue-key ACM-12345 --comment "Identified root cause: cert rotation timer not reset after reconnect"
+/sfa-jira-comment --issue-key ACM-12345 --comment "Identified root cause: cert rotation timer not reset after reconnect"
 
 # Natural language
 Post the PR link to ACM-12345
@@ -131,17 +131,17 @@ What PRs are linked to ACM-12345?
 
 This skill works well in combination with other skills:
 
-1. **After creating a PR** (via clone-worktree + git workflow):
+1. **After creating a PR** (via sfa-workspace-clone + git workflow):
    - Auto-comment the PR URL on the related Jira issue
-   - Optionally transition the issue to "Review" using `jira-update`
+   - Optionally transition the issue to "Review" using `sfa-jira-update`
 
 2. **After PR is merged**:
    - Comment "PR merged" on the Jira issue
-   - Transition to "Resolved" using `jira-update`
+   - Transition to "Resolved" using `sfa-jira-update`
 
 3. **During development**:
    - Log progress notes as comments
-   - Transition to "In Progress" using `jira-update`
+   - Transition to "In Progress" using `sfa-jira-update`
 
 ## Notes
 

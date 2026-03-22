@@ -1,5 +1,5 @@
 ---
-name: sync-repos
+name: sfa-repo-sync
 description: "Sync submodule repos under repos/ to latest remote commits. Use this skill to initialize or update all SF repo submodules. Trigger phrases: 'sync repos', 'update repos', 'update submodules', 'fetch repos', 'init repos', 'refresh repos'."
 ---
 
@@ -38,4 +38,4 @@ Initializes or updates all git submodules under `repos/` to their latest remote 
 
 - `repos/` is **READ-ONLY** — submodules are reference copies for reading/searching only
 - NEVER modify, branch, or commit inside `repos/`
-- For code changes, use the [clone-worktree](../clone-worktree/SKILL.md) skill instead
+- For code changes, use the [sfa-workspace-clone](../sfa-workspace-clone/SKILL.md) skill instead

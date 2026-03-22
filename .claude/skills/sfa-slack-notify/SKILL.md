@@ -1,5 +1,5 @@
 ---
-name: slack-notify
+name: sfa-slack-notify
 description: "Send a Slack notification via Incoming Webhook. General-purpose skill for posting formatted messages to Slack channels. Trigger phrases: 'send to slack', 'notify slack', 'post to slack', 'slack notification', 'send slack message', '发送 Slack', '通知 Slack'. Converts Markdown content to Slack Block Kit format automatically."
 ---
 
@@ -39,16 +39,16 @@ If not set, ask the user to provide it or set the environment variable.
 This skill includes a ready-to-use send script. **Do NOT write your own send script** — use the bundled one:
 
 ```
-.claude/skills/slack-notify/send_to_slack.sh
+.claude/skills/sfa-slack-notify/send_to_slack.sh
 ```
 
 Usage:
 ```bash
 # From a JSON file:
-bash .claude/skills/slack-notify/send_to_slack.sh payload.json
+bash .claude/skills/sfa-slack-notify/send_to_slack.sh payload.json
 
 # From stdin:
-echo "$payload_json" | bash .claude/skills/slack-notify/send_to_slack.sh
+echo "$payload_json" | bash .claude/skills/sfa-slack-notify/send_to_slack.sh
 ```
 
 The script handles single payloads, arrays of payloads (multi-part), rate limiting, and retries.
@@ -72,7 +72,7 @@ Check the generated blocks against Slack's limits. If they exceed limits, split 
 Save the JSON payload to a file and use the bundled `send_to_slack.sh` to send it:
 
 ```bash
-bash .claude/skills/slack-notify/send_to_slack.sh payload.json
+bash .claude/skills/sfa-slack-notify/send_to_slack.sh payload.json
 ```
 
 ---
@@ -242,7 +242,7 @@ Use the bundled script — do NOT write your own curl logic:
 
 ```bash
 # Single or multi-part payload:
-bash .claude/skills/slack-notify/send_to_slack.sh payload.json
+bash .claude/skills/sfa-slack-notify/send_to_slack.sh payload.json
 ```
 
 The script handles HTTP status codes, rate limiting (429), retries, and multi-part splitting automatically.
@@ -258,7 +258,7 @@ payload=$(jq -n \
   '{text: $text, blocks: $blocks}')
 
 echo "$payload" > payload.json
-bash .claude/skills/slack-notify/send_to_slack.sh payload.json
+bash .claude/skills/sfa-slack-notify/send_to_slack.sh payload.json
 ```
 
 **Critical**: Always use `jq` for JSON construction — never build JSON with string concatenation or `echo`. This prevents broken payloads from special characters in the content.

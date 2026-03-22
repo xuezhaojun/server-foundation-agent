@@ -126,8 +126,8 @@ mkdir -p .output/diagnoses
 
 ## Skills Available
 
-- **clone-worktree**: `.claude/skills/clone-worktree/SKILL.md` — Clone repo and create worktree for PR branch
-- **fetch-prs**: `.claude/skills/fetch-prs/SKILL.md` — Fetch PR data (already done by main workflow)
+- **sfa-workspace-clone**: `.claude/skills/sfa-workspace-clone/SKILL.md` — Clone repo and create worktree for PR branch
+- **sfa-github-fetch-prs**: `.claude/skills/sfa-github-fetch-prs/SKILL.md` — Fetch PR data (already done by main workflow)
 
 ## Important Notes
 

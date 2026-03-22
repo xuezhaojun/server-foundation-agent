@@ -117,19 +117,19 @@ Four Jira skills are available for the agent:
 
 | Skill | Purpose | Example Trigger |
 |-------|---------|-----------------|
-| [jira-search](../.claude/skills/jira-search/SKILL.md) | Search/list issues (team-wide or per-member) | "show team jiras", "what bugs does zhiwei have" |
-| [jira-create](../.claude/skills/jira-create/SKILL.md) | Create issues with SF defaults | "create a jira bug for cluster-proxy crash" |
-| [jira-update](../.claude/skills/jira-update/SKILL.md) | Status transitions and field updates | "move ACM-12345 to review" |
-| [jira-comment](../.claude/skills/jira-comment/SKILL.md) | Add comments (PR links, progress notes) | "post PR to ACM-12345" |
+| [sfa-jira-search](../.claude/skills/sfa-jira-search/SKILL.md) | Search/list issues (team-wide or per-member) | "show team jiras", "what bugs does zhiwei have" |
+| [sfa-jira-create](../.claude/skills/sfa-jira-create/SKILL.md) | Create issues with SF defaults | "create a jira bug for cluster-proxy crash" |
+| [sfa-jira-update](../.claude/skills/sfa-jira-update/SKILL.md) | Status transitions and field updates | "move ACM-12345 to review" |
+| [sfa-jira-comment](../.claude/skills/sfa-jira-comment/SKILL.md) | Add comments (PR links, progress notes) | "post PR to ACM-12345" |
 
 ### Workflow Integration
 
 These skills chain together to support the full development lifecycle:
 
 ```
-1. Create issue         →  jira-create
-2. Start development    →  jira-update --status "In Progress"
-3. Create PR            →  jira-comment --pr-url <URL>
-4. Submit for review    →  jira-update --status Review
-5. PR merged            →  jira-comment "PR merged" + jira-update --status Resolved
+1. Create issue         →  sfa-jira-create
+2. Start development    →  sfa-jira-update --status "In Progress"
+3. Create PR            →  sfa-jira-comment --pr-url <URL>
+4. Submit for review    →  sfa-jira-update --status Review
+5. PR merged            →  sfa-jira-comment "PR merged" + sfa-jira-update --status Resolved
 ```

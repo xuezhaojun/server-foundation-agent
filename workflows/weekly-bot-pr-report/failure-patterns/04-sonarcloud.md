@@ -27,9 +27,9 @@ SonarCloud is the only failing check — all build and test checks pass. The age
    - **Security Hotspots**: Hardcoded credentials, insecure crypto, SQL injection risks
    - **Coverage**: Insufficient test coverage (usually NOT fixable by agent)
 
-3. Clone the PR branch using the `clone-worktree` skill:
+3. Clone the PR branch using the `sfa-workspace-clone` skill:
    ```bash
-   WORKTREE=$(.claude/skills/clone-worktree/clone-worktree.sh <org/repo> <pr-number>)
+   WORKTREE=$(.claude/skills/sfa-workspace-clone/clone-worktree.sh <org/repo> <pr-number>)
    cd "$WORKTREE"
    ```
 
@@ -54,7 +54,7 @@ SonarCloud is the only failing check — all build and test checks pass. The age
 
 7. Clean up the worktree:
    ```bash
-   .claude/skills/clone-worktree/clone-worktree.sh --remove <org/repo> <pr-number>
+   .claude/skills/sfa-workspace-clone/clone-worktree.sh --remove <org/repo> <pr-number>
    ```
 
 ## Fallback

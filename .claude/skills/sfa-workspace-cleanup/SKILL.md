@@ -1,5 +1,5 @@
 ---
-name: cleanup-workspace
+name: sfa-workspace-cleanup
 description: "Clean up workspace/ by removing cloned repos whose PRs are already merged or closed. Use this skill when workspace gets cluttered with old worktrees. Trigger phrases: 'clean workspace', 'cleanup workspace', 'remove old worktrees', 'prune workspace'."
 ---
 
@@ -18,13 +18,13 @@ Scans the `workspace/` directory for cloned repos with branches tied to merged o
 ### Dry Run (preview what would be removed)
 
 ```bash
-.claude/skills/cleanup-workspace/cleanup-workspace.sh --dry-run workspace
+.claude/skills/sfa-workspace-cleanup/cleanup-workspace.sh --dry-run workspace
 ```
 
 ### Actual Cleanup
 
 ```bash
-.claude/skills/cleanup-workspace/cleanup-workspace.sh workspace
+.claude/skills/sfa-workspace-cleanup/cleanup-workspace.sh workspace
 ```
 
 ## How It Works
