@@ -23,13 +23,12 @@ All `sfa-project-*` skills depend on these IDs to read and update project item f
 
 Field ID: `PVTSSF_lADOA5awWc4BSgimzhABWLU`
 
-| Option      | Option ID    |
-|-------------|--------------|
-| Backlog     | `f75ad846`   |
-| Ready       | `61e4505c`   |
-| In progress | `47fc9ee4`   |
-| In review   | `df73e18b`   |
-| Done        | `98236657`   |
+| Option      | Option ID    | Description |
+|-------------|--------------|-------------|
+| Backlog     | `7582c76d`   | Not yet started |
+| In progress | `f33d0676`   | Agent is working on this task |
+| In review   | `196397cb`   | Agent done, waiting for human supervisor review |
+| Done        | `2a255443`   | Reviewed and completed |
 
 #### Priority
 
@@ -102,7 +101,7 @@ gh project item-add 9 --owner stolostron --url https://github.com/stolostron/rep
 gh project item-edit --id <item-id> \
   --field-id PVTSSF_lADOA5awWc4BSgimzhABWLU \
   --project-id PVT_kwDOA5awWc4BSgim \
-  --single-select-option-id 47fc9ee4
+  --single-select-option-id f33d0676
 ```
 
 The example above sets Status to "In progress".
@@ -227,7 +226,7 @@ mutation {
     projectId: "PVT_kwDOA5awWc4BSgim"
     itemId: "PVTI_..."
     fieldId: "PVTSSF_lADOA5awWc4BSgimzhABWLU"
-    value: { singleSelectOptionId: "47fc9ee4" }
+    value: { singleSelectOptionId: "f33d0676" }
   }) {
     projectV2Item {
       id

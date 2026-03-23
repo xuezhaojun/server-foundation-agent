@@ -14,7 +14,7 @@ Create tasks (draft issues) or add existing GitHub Issues/PRs to the project boa
 | title | Yes (for draft) | - | Task title |
 | body | No | - | Task description/context |
 | url | Yes (for existing) | - | GitHub Issue or PR URL to add |
-| status | No | Backlog | Backlog, Ready, In progress, In review, Done |
+| status | No | Backlog | Backlog, In progress, In review, Done |
 | priority | No | - | P0, P1, P2 |
 | size | No | - | XS, S, M, L, XL |
 | start-date | No | - | YYYY-MM-DD format |
@@ -54,7 +54,7 @@ For each field that needs setting, run a separate `gh project item-edit` command
 gh project item-edit --id <item-id> --field-id PVTSSF_lADOA5awWc4BSgimzhABWLU --project-id PVT_kwDOA5awWc4BSgim --single-select-option-id <status-option-id>
 ```
 
-Status option IDs: Backlog=f75ad846, Ready=61e4505c, In progress=47fc9ee4, In review=df73e18b, Done=98236657
+Status option IDs: Backlog=7582c76d, In progress=f33d0676, In review=196397cb, Done=2a255443
 
 **Priority** (single-select):
 ```bash
@@ -88,7 +88,7 @@ Display created item with all set fields. Provide the board URL: https://github.
 
 ```
 # Create a draft task
-/sfa-project-create --title "Review PR #456 cluster-proxy" --status Ready --priority P1 --size S
+/sfa-project-create --title "Review PR #456 cluster-proxy" --status "In progress" --priority P1 --size S
 
 # Add existing PR to board
 /sfa-project-create --url https://github.com/stolostron/cluster-proxy/pull/456 --status "In progress"

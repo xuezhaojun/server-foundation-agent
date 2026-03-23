@@ -100,7 +100,6 @@ p0_active = [i for i in items if i.get('priority') == 'P0' and i.get('status') !
 |--------|-------|---|
 | In progress | X | X% |
 | In review | X | X% |
-| Ready | X | X% |
 | Backlog | X | X% |
 | Done | X | X% |
 | **Total** | **X** | **100%** |
@@ -128,7 +127,7 @@ p0_active = [i for i in items if i.get('priority') == 'P0' and i.get('status') !
 - Task title 5
 
 ### Blockers / Urgent (P0)
-- Task title 6 -- Status: Ready
+- Task title 6 -- Status: Backlog
 ```
 
 ### Step 4: Send to Slack (if requested)

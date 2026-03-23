@@ -11,7 +11,7 @@ List and filter items on the project board at https://github.com/orgs/stolostron
 
 | Parameter | Required | Default | Notes |
 |-----------|----------|---------|-------|
-| status | No | all | Backlog, Ready, In progress, In review, Done |
+| status | No | all | Backlog, In progress, In review, Done |
 | priority | No | all | P0, P1, P2 |
 | size | No | all | XS, S, M, L, XL |
 | keyword | No | - | Search in title/body text |
@@ -59,7 +59,7 @@ if keyword_filter:
 
 # Sort: by priority (P0 first), then status order
 priority_order = {'P0': 0, 'P1': 1, 'P2': 2, '': 3}
-status_order = {'In progress': 0, 'In review': 1, 'Ready': 2, 'Backlog': 3, 'Done': 4}
+status_order = {'In progress': 0, 'In review': 1, 'Backlog': 2, 'Done': 3}
 
 filtered.sort(key=lambda x: (priority_order.get(x.get('priority', ''), 3), status_order.get(x.get('status', ''), 5)))
 

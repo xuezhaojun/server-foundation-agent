@@ -12,7 +12,7 @@ Update fields on items in the project board at https://github.com/orgs/stolostro
 | Parameter | Required | Default | Notes |
 |-----------|----------|---------|-------|
 | item | Yes | - | Item title (fuzzy match) or item ID |
-| status | No | - | Backlog, Ready, In progress, In review, Done |
+| status | No | - | Backlog, In progress, In review, Done |
 | priority | No | - | P0, P1, P2 |
 | size | No | - | XS, S, M, L, XL |
 | start-date | No | - | YYYY-MM-DD |
@@ -43,7 +43,7 @@ For each requested field change, run a separate command:
 ```bash
 gh project item-edit --id <item-id> --field-id PVTSSF_lADOA5awWc4BSgimzhABWLU --project-id PVT_kwDOA5awWc4BSgim --single-select-option-id <option-id>
 ```
-Options: Backlog=f75ad846, Ready=61e4505c, In progress=47fc9ee4, In review=df73e18b, Done=98236657
+Options: Backlog=7582c76d, In progress=f33d0676, In review=196397cb, Done=2a255443
 
 **Priority:**
 ```bash

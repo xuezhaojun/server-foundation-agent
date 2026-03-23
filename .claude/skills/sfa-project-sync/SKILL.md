@@ -118,11 +118,10 @@ Then set fields based on Jira data using `gh project item-edit`.
 
 - Project ID: `PVT_kwDOA5awWc4BSgim`
 - Status field: `PVTSSF_lADOA5awWc4BSgimzhABWLU`
-  - Backlog: `f75ad846`
-  - Ready: `61e4505c`
-  - In progress: `47fc9ee4`
-  - In review: `df73e18b`
-  - Done: `98236657`
+  - Backlog: `7582c76d`
+  - In progress: `f33d0676`
+  - In review: `196397cb`
+  - Done: `2a255443`
 - Priority field: `PVTSSF_lADOA5awWc4BSgimzhABWTk`
   - P0: `79628723`
   - P1: `0a877460`
