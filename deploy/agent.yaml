@@ -59,3 +59,6 @@ spec:
     - name: slack
       secretRef:
         name: slack-webhook-url
+    - name: jira-token
+      secretRef:
+        name: jira-token
