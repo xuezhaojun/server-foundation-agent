@@ -35,6 +35,7 @@ The JSON output contains items with their field values. Each item has:
 - `status`: Status field value
 - `priority`: Priority field value (from custom field)
 - `size`: Size field value (from custom field)
+- `assignees`: List of assigned GitHub usernames (supervisor)
 - Other field values
 
 ### Step 2: Filter results
@@ -64,12 +65,13 @@ status_order = {'In progress': 0, 'In review': 1, 'Backlog': 2, 'Done': 3}
 filtered.sort(key=lambda x: (priority_order.get(x.get('priority', ''), 3), status_order.get(x.get('status', ''), 5)))
 
 for item in filtered:
-    print(f"{item.get('status','')}\t{item.get('priority','')}\t{item.get('size','')}\t{item['title']}")
+    assignees = ', '.join(item.get('assignees', []) or [])
+    print(f"{item.get('status','')}\t{item.get('priority','')}\t{item.get('size','')}\t{assignees}\t{item['title']}")
 ```
 
 ### Step 3: Present results
 
-Display as a markdown table with columns: Status, Priority, Size, Title, Type.
+Display as a markdown table with columns: Status, Priority, Size, Supervisor, Title, Type.
 
 After the table, show:
 - Total count and per-status distribution
