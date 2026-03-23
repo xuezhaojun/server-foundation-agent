@@ -6,6 +6,25 @@ Project changes, architectural decisions, and the reasoning behind them. Each en
 
 ---
 
+## 2026-03-24
+
+### Added daily-bug-triage workflow
+
+New automated workflow that triages all Server Foundation Jira bugs in "New" status every weekday at 09:00 CST. For each bug, a sub-agent analyzes the codebase to find the root cause, then a summary is sent to Slack with `@acm-server-foundation` mention.
+
+**Files added:**
+- `workflows/daily-bug-triage.md` — workflow definition (4 phases: collect, analyze, report, distribute)
+- `workflows/daily-bug-triage/analyze_bug.md` — sub-agent instructions for codebase analysis
+- `workflows/daily-bug-triage/generate_slack_payload.py` — Slack Block Kit payload generator
+- `deploy/cronjobs/every-weekday-morning.yaml` — CronJob (Mon-Fri 09:00 CST / 01:00 UTC)
+
+**Design decisions:**
+- Sub-agents search `repos/` (read-only submodules) for analysis — no git clone needed
+- Analysis supports 4 statuses: root-cause-found, partial-analysis, insufficient-info, error
+- Graceful degradation: if analysis fails or info is insufficient, the reason is reported instead of silently skipping
+
+---
+
 ## 2026-03-23
 
 ### Removed GitHub Projects board and related skills

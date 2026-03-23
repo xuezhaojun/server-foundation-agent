@@ -1,0 +1,71 @@
+# CronJob: Every Weekday Morning
+# Creates a Task for the daily bug triage workflow
+# Schedule: Weekday 09:00 CST (UTC+8) = 01:00 UTC
+# Test:
+#   kubectl create job test-weekday-morning --from=cronjob/every-weekday-morning-cron -n server-foundation
+#   kubectl get jobs -n server-foundation -l job-name=test-weekday-morning
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: every-weekday-morning-cron
+  namespace: server-foundation
+  labels:
+    app.kubernetes.io/name: every-weekday-morning
+    app.kubernetes.io/part-of: server-foundation-agent
+    app.kubernetes.io/component: scheduler
+spec:
+  # Weekday 09:00 CST (UTC+8) = 01:00 UTC, Monday-Friday
+  schedule: "0 1 * * 1-5"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 120
+      template:
+        spec:
+          serviceAccountName: server-foundation-cron-task-creator
+          restartPolicy: OnFailure
+          containers:
+            - name: task-creator
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  # Add workflow files here to run every weekday morning
+                  WORKFLOWS="
+                    workflows/daily-bug-triage.md
+                  "
+
+                  for workflow in $WORKFLOWS; do
+                    # Derive task name from workflow filename (e.g. daily-bug-triage)
+                    task_name=$(basename "$workflow" .md)
+
+                    echo "Creating task for $task_name..."
+
+                    cat <<EOF | kubectl create -f -
+                  apiVersion: kubeopencode.io/v1alpha1
+                  kind: Task
+                  metadata:
+                    generateName: ${task_name}-task-
+                    namespace: server-foundation
+                    labels:
+                      app.kubernetes.io/name: ${task_name}
+                      app.kubernetes.io/part-of: server-foundation-agent
+                      batch.kubeopencode.io/job-type: ${task_name}
+                    annotations:
+                      kubeopencode.io/triggered-by: cronjob/every-weekday-morning-cron
+                  spec:
+                    agentRef:
+                      name: server-foundation-agent
+                    description: |
+                      Follow @${workflow} to complete the task.
+                  EOF
+
+                    echo "Task $task_name created"
+                  done
+
+                  echo "All weekday morning tasks created"

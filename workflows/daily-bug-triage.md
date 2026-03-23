@@ -1,0 +1,288 @@
+# Daily Bug Triage Workflow
+
+Automatically triage all Server Foundation Jira bugs in "New" status by analyzing the codebase to find root causes,
+then send a summary Slack notification every weekday morning.
+
+## Trigger Phrases
+
+- `daily bug triage`, `bug triage report`, `triage new bugs`
+- `analyze new bugs`, `check new bugs`
+
+## Workflow Phases
+
+```
+Phase 1: Collect    →  Phase 2: Analyze        →  Phase 3: Report    →  Phase 4: Distribute
+sfa-jira-search        sub-agents per bug          generate Slack         sfa-slack-notify
+(status=New, type=Bug)  (codebase deep-dive)        payload
+```
+
+---
+
+## Phase 1: Collect New Bugs from Jira
+
+Use the `sfa-jira-search` skill to fetch all bugs with status "New" for the SF team.
+
+### 1.1 Query Jira
+
+```bash
+mkdir -p .output/bug-triage
+
+curl -s -X POST \
+  -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jql": "project = ACM AND component = \"Server Foundation\" AND issuetype = Bug AND status = New ORDER BY priority ASC",
+    "fields": ["issuetype", "key", "summary", "status", "priority", "assignee", "description", "components", "created", "updated", "customfield_10020"],
+    "maxResults": 50
+  }' \
+  "https://redhat.atlassian.net/rest/api/3/search/jql" > .output/bug-triage/new_bugs_raw.json
+```
+
+### 1.2 Parse Bug Data
+
+Extract structured bug info from the raw JSON:
+
+```python
+import json, sys
+
+data = json.load(open('.output/bug-triage/new_bugs_raw.json'))
+issues = data.get('issues', [])
+
+bugs = []
+for issue in issues:
+    f = issue['fields']
+
+    # Extract description text from ADF (Atlassian Document Format)
+    desc = ''
+    if f.get('description'):
+        # ADF is nested JSON; extract text content recursively
+        def extract_text(node):
+            if isinstance(node, dict):
+                text = node.get('text', '')
+                children = node.get('content', [])
+                return text + ''.join(extract_text(c) for c in children)
+            elif isinstance(node, list):
+                return ''.join(extract_text(c) for c in node)
+            return ''
+        desc = extract_text(f['description'])
+
+    assignee = f.get('assignee')
+    assignee_name = assignee.get('displayName', 'Unassigned') if assignee else 'Unassigned'
+    assignee_email = assignee.get('emailAddress', '') if assignee else ''
+
+    # Sprint info
+    sprint_field = f.get('customfield_10020')
+    sprint_name = ''
+    if sprint_field and isinstance(sprint_field, list) and len(sprint_field) > 0:
+        last = sprint_field[-1]
+        sprint_name = last.get('name', '') if isinstance(last, dict) else ''
+
+    # Components
+    components = [c['name'] for c in f.get('components', [])]
+
+    bugs.append({
+        'key': issue['key'],
+        'summary': f['summary'],
+        'description': desc[:2000],  # Truncate long descriptions
+        'priority': f['priority']['name'],
+        'assignee': assignee_name,
+        'assignee_email': assignee_email,
+        'components': components,
+        'sprint': sprint_name,
+        'created': f.get('created', ''),
+        'updated': f.get('updated', ''),
+        'url': f'https://redhat.atlassian.net/browse/{issue["key"]}'
+    })
+
+json.dump(bugs, open('.output/bug-triage/new_bugs.json', 'w'), indent=2)
+print(f"Found {len(bugs)} new bugs")
+```
+
+### 1.3 Early Exit
+
+If no bugs are found (`len(bugs) == 0`), skip Phases 2-3 and send a simple "no new bugs" Slack notification, then exit.
+
+---
+
+## Phase 2: Analyze Each Bug (Sub-Agents)
+
+For each bug, spawn a **sub-agent** to perform a deep-dive analysis against the codebase. This prevents context window exhaustion when analyzing multiple bugs.
+
+### Sub-Agent Architecture
+
+Each sub-agent:
+1. Receives a single bug object (from Phase 1)
+2. Reads `workflows/daily-bug-triage/analyze_bug.md` for its instructions
+3. Identifies the relevant repository based on bug summary, description, and components
+4. Searches `repos/` (read-only submodules) for relevant code
+5. Analyzes the root cause based on code and bug description
+6. Writes result to `.output/bug-triage/analyses/bug-<KEY>.json`
+
+### Spawning Sub-Agents
+
+Use the Agent tool to spawn each sub-agent:
+
+```
+For each bug in new_bugs.json:
+  Agent(
+    subagent_type: "general-purpose",
+    description: "Analyze bug <KEY>",
+    prompt: "Read workflows/daily-bug-triage/analyze_bug.md for instructions.
+             Here is the bug data: <BUG_JSON>.
+             Analyze this bug and write the result to .output/bug-triage/analyses/bug-<KEY>.json"
+  )
+```
+
+**Parallelism**: Spawn up to 3-5 sub-agents concurrently. Each operates independently on its own bug.
+
+### Analysis Result Schema
+
+Each sub-agent writes a JSON file to `.output/bug-triage/analyses/bug-<KEY>.json`:
+
+```json
+{
+  "key": "ACM-12345",
+  "summary": "MCA will not update hosting-cluster-name annotation",
+  "priority": "Major",
+  "assignee": "Le Yang",
+  "url": "https://redhat.atlassian.net/browse/ACM-12345",
+  "analysis_status": "root-cause-found | partial-analysis | insufficient-info | error",
+  "relevant_repo": "stolostron/multicloud-operators-foundation",
+  "relevant_files": ["pkg/controllers/addon/addon_controller.go:125"],
+  "root_cause": "Human-readable explanation of the root cause",
+  "suggested_fix": "Brief description of how to fix it",
+  "confidence": "high | medium | low",
+  "notes": "Any additional context or caveats"
+}
+```
+
+### Analysis Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `root-cause-found` | Agent identified the root cause with confidence |
+| `partial-analysis` | Agent found relevant code but could not pinpoint exact cause |
+| `insufficient-info` | Bug description lacks enough detail for analysis |
+| `error` | Agent encountered an error during analysis |
+
+---
+
+## Phase 3: Generate Report & Slack Payload
+
+After all sub-agents complete, generate the Slack payload from collected analysis results.
+
+### 3.1 Collect Results
+
+Read all `bug-*.json` files from `.output/bug-triage/analyses/` directory.
+
+### 3.2 Generate Slack Payload
+
+```bash
+python3 workflows/daily-bug-triage/generate_slack_payload.py \
+  .output/bug-triage/analyses/ \
+  .output/bug-triage/slack_payload.json
+```
+
+---
+
+## Phase 4: Distribute
+
+Send the Slack payload:
+
+```bash
+bash .claude/skills/sfa-slack-notify/send_to_slack.sh .output/bug-triage/slack_payload.json
+```
+
+**Dependencies**:
+- `workflows/daily-bug-triage/generate_slack_payload.py`
+- `.claude/skills/sfa-slack-notify/send_to_slack.sh`
+
+---
+
+## Slack Message Structure
+
+### Header
+```
+🐛 SF Daily Bug Triage — YYYY-MM-DD
+```
+
+### Summary
+```
+*Summary:* {N} new bugs analyzed
+*Root cause found:* {n}  ·  *Partial:* {n}  ·  *Needs info:* {n}
+```
+
+### Per-Bug Sections
+
+For each bug, grouped by `analysis_status`:
+
+**Root Cause Found:**
+```
+*🟢 Root Cause Identified ({n})*
+• <url|ACM-12345> *Major* — MCA will not update hosting-cluster-name annotation
+  _Repo:_ multicloud-operators-foundation · _Files:_ addon_controller.go:125
+  _Cause:_ The reconciler does not watch for annotation changes on MCA objects
+  _Fix:_ Add annotation predicate to the controller watch
+```
+
+**Partial Analysis:**
+```
+*🟡 Partial Analysis ({n})*
+• <url|ACM-12346> *Critical* — Cluster import fails silently
+  _Repo:_ managedcluster-import-controller
+  _Notes:_ Found relevant error handling code but could not reproduce exact scenario described
+```
+
+**Insufficient Info:**
+```
+*🔴 Needs More Info ({n})*
+• <url|ACM-12347> *Normal* — Random cluster proxy disconnections
+  _Reason:_ Bug description lacks reproduction steps and environment details
+```
+
+### Context Footer
+```
+Generated by server-foundation-agent · YYYY-MM-DD
+```
+
+---
+
+## Repo Identification Strategy
+
+The sub-agent maps bugs to repos using these signals (in priority order):
+
+1. **Component field** — Jira components often map directly to repos (e.g., "cluster-proxy" → cluster-proxy repo)
+2. **Keywords in summary/description** — Look for repo names, controller names, CRD names (e.g., "MCA" → ManagedClusterAddon → multicloud-operators-foundation or addon-framework)
+3. **Assignee ownership** — Cross-reference with `team-members/member-ownership.md`
+4. **Repo inventory** — Use `docs/repos.md` as the full list of SF repos
+
+### Keyword → Repo Mapping (Common Patterns)
+
+| Keyword | Likely Repo |
+|---------|-------------|
+| MCA, ManagedClusterAddon, addon | multicloud-operators-foundation or addon-framework |
+| import, klusterlet, ManagedCluster import | managedcluster-import-controller |
+| proxy, konnectivity, tunnel | cluster-proxy or cluster-proxy-addon |
+| ServiceAccount, managed-sa | managed-serviceaccount |
+| permission, ClusterPermission, RBAC | cluster-permission |
+| foundation, clusterinfo, ManagedClusterInfo | multicloud-operators-foundation |
+| metrics, state-metrics | clusterlifecycle-state-metrics |
+| klusterlet-addon | klusterlet-addon-controller |
+| OCM, registration, work | ocm |
+
+---
+
+## Edge Cases
+
+- **Bug with empty description**: Mark as `insufficient-info` with note "No description provided"
+- **Bug referencing multiple repos**: Analyze the most likely repo based on keyword density; mention others in `notes`
+- **Bug about infrastructure/CI (not code)**: Mark as `partial-analysis` with note about non-code issue
+- **Repos not in submodules**: If the relevant repo is not under `repos/`, note this limitation
+- **Analysis timeout**: If a sub-agent takes too long, it should write a partial result and exit
+
+## Performance Notes
+
+- Phase 1 makes one Jira API call — very fast
+- Phase 2 sub-agents run in parallel (up to 3-5 concurrent)
+- Sub-agents only read code from `repos/` (local submodules) — no git clone needed
+- Total workflow should complete within 10-15 minutes for typical bug counts (1-10 bugs)
