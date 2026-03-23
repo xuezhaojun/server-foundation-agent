@@ -41,6 +41,7 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [deploy/README.md](deploy/README.md) | Cluster deployment setup (secrets, kustomize, monitoring) |
 | [docs/development-guide.md](docs/development-guide.md) | Development standards (commits, PRs, code style) |
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
+| [docs/limitations.md](docs/limitations.md) | Known agent limitations, access restrictions, and capability gaps |
 | [solutions/README.md](solutions/README.md) | Solutions catalog and index |
 
 ## Development Standards (CRITICAL)
