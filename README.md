@@ -42,11 +42,12 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [docs/development-guide.md](docs/development-guide.md) | Development standards (commits, PRs, code style) |
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
 | [docs/limitations.md](docs/limitations.md) | Known agent limitations, access restrictions, and capability gaps |
+| [docs/github-projects.md](docs/github-projects.md) | GitHub Projects V2 API reference: field IDs, CLI commands, GraphQL examples |
 | [solutions/README.md](solutions/README.md) | Solutions catalog and index |
 
 ## Development Standards (CRITICAL)
 
-**All development work MUST follow the [Development Guide](docs/development-guide.md).** This includes commit sign-off, PR templates, title conventions, code comment language, and fork workflow. The guide applies in all contexts: local, CI/CD, and cloud-hosted agent runs.
+**All development work MUST follow the [Development Guide](docs/development-guide.md).** This includes commit sign-off, PR templates, title conventions, code comment language, fork workflow, and **SFA footprint** (Co-authored-by trailers, `sfa-assisted` labels, agent signatures). The guide applies in all contexts: local, CI/CD, and cloud-hosted agent runs.
 
 ## Working with Code (CRITICAL)
 
