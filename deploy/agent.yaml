@@ -26,12 +26,7 @@ spec:
       "model": "google/gemini-3.1-pro-preview",
       "small_model": "google/gemini-3-flash-preview",
       "share": "disabled",
-      "autoupdate": false,
-      "agent": {
-        "general": {
-          "model": "google/gemini-3-flash-preview"
-        }
-      }
+      "autoupdate": false
     }
   contexts:
     - name: agent-repo
