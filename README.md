@@ -43,6 +43,7 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
 | [updates.md](updates.md) | Daily development log: session summaries, issues, limitations |
 | [changelog.md](changelog.md) | Project changes, architectural decisions, and reasoning |
+| [roadmap.md](roadmap.md) | Planned features and improvements |
 | [solutions/README.md](solutions/README.md) | Solutions catalog and index |
 
 ## Development Standards (CRITICAL)
