@@ -173,6 +173,10 @@ create_worktree_pr() {
 
     local org="${repo_full%%/*}"
     local repo="${repo_full##*/}"
+
+    # Convert base_dir to absolute path (see create_worktree_new for rationale)
+    base_dir="$(cd "$base_dir" 2>/dev/null && pwd || mkdir -p "$base_dir" && cd "$base_dir" && pwd)"
+
     local bare_dir="${base_dir}/${org}/${repo}.git"
     local worktrees_dir="${base_dir}/${org}/${repo}-worktrees"
     local worktree_dir="${worktrees_dir}/pr-${pr_number}"
@@ -251,6 +255,12 @@ create_worktree_new() {
 
     local org="${repo_full%%/*}"
     local repo="${repo_full##*/}"
+
+    # Convert base_dir to absolute path to prevent worktree being created
+    # inside the bare repo when git -C is used (git resolves relative paths
+    # relative to the -C directory, not the caller's cwd).
+    base_dir="$(cd "$base_dir" 2>/dev/null && pwd || mkdir -p "$base_dir" && cd "$base_dir" && pwd)"
+
     local bare_dir="${base_dir}/${org}/${repo}.git"
     local worktrees_dir="${base_dir}/${org}/${repo}-worktrees"
     local worktree_dir="${worktrees_dir}/${branch_name}"
