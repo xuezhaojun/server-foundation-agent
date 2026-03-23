@@ -27,6 +27,9 @@ PR submitted: [<PR-title>|<PR-URL>]
 Repository: <org/repo>
 Branch: <branch-name>
 Author: <author>
+
+----
+_— server-foundation-agent_
 ```
 
 ### Progress Update Comment
@@ -37,11 +40,19 @@ When the user wants to log progress:
 *Progress Update* (<date>)
 
 <user's message>
+
+----
+_— server-foundation-agent_
 ```
 
 ### General Comment
 
-For free-form comments, post the text as-is with Jira wiki markup.
+For free-form comments, post the text as-is with Jira wiki markup. **Always** append the agent signature footer:
+
+```
+----
+_— server-foundation-agent_
+```
 
 ## Workflow
 

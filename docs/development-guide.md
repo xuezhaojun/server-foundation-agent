@@ -93,6 +93,61 @@ The `main` branch automatically fast-forwards to the **latest release branch** (
 
 See [releases.md](releases.md) for the full active branch list and concrete examples.
 
+## SFA Footprint (Traceability)
+
+All actions performed by server-foundation-agent **MUST** leave a traceable footprint for data-driven reporting and builder journey presentations.
+
+### Git Commits — Co-authored-by Trailer
+
+When the agent creates or contributes to a commit, **always** append the `Co-authored-by` trailer:
+
+```bash
+git commit -s -m "fix(proxy): handle cert rotation timeout
+
+Co-authored-by: server-foundation-agent <sfa-bot@redhat.com>"
+```
+
+- The trailer goes in the commit **body**, separated from the subject by a blank line.
+- This is in addition to the `Signed-off-by` line from `-s`.
+- GitHub natively renders co-authors in the commit UI and they are searchable.
+
+### Pull Requests — Label + Footer
+
+After creating a PR with `gh pr create`, **always**:
+
+1. Add the `sfa-assisted` label:
+
+```bash
+gh pr edit <PR-NUMBER> --repo <org/repo> --add-label "sfa-assisted"
+```
+
+2. Include a footer line at the end of the PR description:
+
+```markdown
+---
+*Created with [server-foundation-agent](https://github.com/stolostron/server-foundation-agent)*
+```
+
+### Jira — Label + Signature
+
+**Issues created** by the agent must include `sfa-assisted` in the labels array.
+
+**All Jira comments** posted by the agent must end with a signature footer:
+
+```
+----
+_— server-foundation-agent_
+```
+
+### Querying Footprints
+
+| Data | Source | Query |
+|------|--------|-------|
+| PRs created | GitHub | `label:sfa-assisted is:pr org:stolostron` |
+| Commits | Git | `git log --grep="Co-authored-by: server-foundation-agent"` |
+| Jira issues | Jira | `project = ACM AND labels = sfa-assisted` |
+| Jira comments | Jira | Search comment body for `server-foundation-agent` |
+
 ## GitHub Interaction
 
 - Use `gh` CLI for all GitHub operations (PRs, issues, reviews).

@@ -65,9 +65,12 @@ After making changes:
 
 ```bash
 cd workspace/<org>/<repo>-worktrees/<branch>/
-# make changes, commit...
+# make changes, commit (include Co-authored-by trailer per development guide)...
 git push fork <branch-name>
 gh pr create --repo <org/repo> --head <your-user>:<branch-name>
+
+# SFA Footprint: always add the sfa-assisted label after creating a PR
+gh pr edit <PR-NUMBER> --repo <org/repo> --add-label "sfa-assisted"
 ```
 
 ## Input
