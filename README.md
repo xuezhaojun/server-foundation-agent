@@ -42,7 +42,7 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [docs/development-guide.md](docs/development-guide.md) | Development standards (commits, PRs, code style) |
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
 | [updates.md](updates.md) | Daily development log: session summaries, issues, limitations |
-| [docs/github-projects.md](docs/github-projects.md) | GitHub Projects V2 API reference: field IDs, CLI commands, GraphQL examples |
+| [changelog.md](changelog.md) | Project changes, architectural decisions, and reasoning |
 | [solutions/README.md](solutions/README.md) | Solutions catalog and index |
 
 ## Development Standards (CRITICAL)

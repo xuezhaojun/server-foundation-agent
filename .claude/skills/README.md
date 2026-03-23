@@ -13,11 +13,6 @@ Skills are task-specific workflows the agent can execute. Each skill has a step-
 | [sfa-jira-create](sfa-jira-create/SKILL.md) | Create Jira issues in the ACM project with SF defaults | On demand |
 | [sfa-jira-update](sfa-jira-update/SKILL.md) | Update Jira issue status (workflow transitions) and fields | On demand |
 | [sfa-jira-comment](sfa-jira-comment/SKILL.md) | Add comments to Jira issues (PR links, progress updates) | On demand |
-| [sfa-project-create](sfa-project-create/SKILL.md) | Create tasks (draft issues) or add Issues/PRs to the GitHub Projects board | On demand |
-| [sfa-project-update](sfa-project-update/SKILL.md) | Update task status, priority, size, dates on the Projects board | On demand |
-| [sfa-project-search](sfa-project-search/SKILL.md) | List/filter/query items on the Projects board | On demand |
-| [sfa-project-sync](sfa-project-sync/SKILL.md) | Sync Jira issues to the GitHub Projects board | On demand |
-| [sfa-project-report](sfa-project-report/SKILL.md) | Generate progress reports from board data, optionally send to Slack | On demand |
 | [sfa-session-log](sfa-session-log/SKILL.md) | Log session summary to updates.md (what was done, issues, limitations) | On demand |
 
 ## Adding a New Skill
