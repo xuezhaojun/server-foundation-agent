@@ -44,7 +44,7 @@ Use the helper script to manage submodules:
 | Repository | Description |
 |------------|-------------|
 | [klusterlet-addon-controller](https://github.com/stolostron/klusterlet-addon-controller) | Klusterlet addon controller |
-| [cluster-permission](https://github.com/stolostron/cluster-permission) | Cluster permission management |
+| [cluster-permission](https://github.com/stolostron/cluster-permission) | Cluster permission management (migrated to MCE in 2.17) |
 | [multicluster-role-assignment](https://github.com/stolostron/multicluster-role-assignment) | Multicluster RBAC |
 
 ### Dependency Libraries (`repos/deps/`, forked with SF-specific changes)
@@ -59,6 +59,7 @@ Use the helper script to manage submodules:
 | Repository | Description |
 |------------|-------------|
 | [backplane-operator](https://github.com/stolostron/backplane-operator) | Installs all MCE/Foundation components into ACM |
+| [multiclusterhub-operator](https://github.com/stolostron/multiclusterhub-operator) | Installs ACM components on top of MCE |
 
 ## open-cluster-management-io (`repos/server-foundation/ocm-io/`, upstream)
 

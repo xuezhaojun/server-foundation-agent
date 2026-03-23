@@ -73,3 +73,6 @@
 [submodule "repos/deps/stolostron/grpc-go"]
 	path = repos/deps/stolostron/grpc-go
 	url = https://github.com/stolostron/grpc-go.git
+[submodule "repos/installer/stolostron/multiclusterhub-operator"]
+	path = repos/installer/stolostron/multiclusterhub-operator
+	url = https://github.com/stolostron/multiclusterhub-operator.git
