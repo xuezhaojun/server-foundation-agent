@@ -72,6 +72,20 @@ Based on the code you found:
 
 If you identified the root cause, briefly describe what code change would fix it. Do NOT make any actual code changes — this is analysis only.
 
+### Step 5: Assess Auto-Fix Eligibility
+
+Set `auto_fix_eligible: true` in your output when **ALL** of these conditions are met:
+
+1. `analysis_status` is `root-cause-found`
+2. `confidence` is `high`
+3. `suggested_fix` is non-empty and describes a concrete, implementable change
+
+Set `auto_fix_eligible: false` if any condition is not met, or if:
+- The fix requires changes across multiple repos
+- The fix involves API/CRD schema changes (high blast radius)
+- The fix requires manual testing or environment-specific validation
+- The bug involves security-sensitive code (auth, RBAC, certificates)
+
 ## Output
 
 Write the analysis result to `.output/bug-triage/analyses/bug-<KEY>.json`:
@@ -95,9 +109,14 @@ mkdir -p .output/bug-triage/analyses
   "root_cause": "Human-readable explanation of the root cause",
   "suggested_fix": "Brief description of how to fix it, or empty string if unknown",
   "confidence": "high | medium | low",
+  "auto_fix_eligible": false,
+  "draft_pr_url": "",
   "notes": "Any additional context, caveats, or related information"
 }
 ```
+
+- `auto_fix_eligible`: Set to `true` only when all eligibility conditions from Step 5 are met. Defaults to `false`.
+- `draft_pr_url`: Leave empty — this field is populated by Phase 2.5 (auto-fix) in the main workflow, not by this sub-agent.
 
 ### Analysis Status Guide
 

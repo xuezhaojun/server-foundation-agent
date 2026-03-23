@@ -70,6 +70,12 @@ def format_root_cause_bug(a):
             fix = fix[:149] + "\u2026"
         lines.append(f"     _Fix:_ {fix}")
 
+    # Draft PR link (from Phase 2.5 auto-fix)
+    draft_pr_url = a.get('draft_pr_url', '')
+    if draft_pr_url:
+        pr_num = draft_pr_url.rstrip('/').split('/')[-1]
+        lines.append(f"     \U0001f527 _Draft PR:_ <{draft_pr_url}|#{pr_num}> \u2014 ready for review")
+
     return "\n".join(lines)
 
 
@@ -131,10 +137,12 @@ def main():
     n_partial = len(by_status.get("partial-analysis", []))
     n_insufficient = len(by_status.get("insufficient-info", []))
     n_error = len(by_status.get("error", []))
+    n_draft_prs = sum(1 for a in analyses if a.get('draft_pr_url'))
 
     fallback_text = (
         f"SF Daily Bug Triage \u2014 {today}: "
         f"{total} new bugs, {n_root_cause} root cause found, "
+        f"{n_draft_prs} draft PRs, "
         f"{n_partial} partial, {n_insufficient} needs info"
     )
 
@@ -152,8 +160,9 @@ def main():
                 "type": "mrkdwn",
                 "text": (
                     f"{SF_GROUP_MENTION}\n"
-                    f"*Summary:* {total} new bug{'s' if total != 1 else ''} analyzed\n"
-                    f"*Root cause found:* {n_root_cause}  \u00b7  "
+                    f"*Summary:* {total} new bug{'s' if total != 1 else ''} analyzed"
+                    + (f" \u00b7 {n_draft_prs} draft PR{'s' if n_draft_prs != 1 else ''} submitted" if n_draft_prs > 0 else "")
+                    + f"\n*Root cause found:* {n_root_cause}  \u00b7  "
                     f"*Partial:* {n_partial}  \u00b7  "
                     f"*Needs info:* {n_insufficient}"
                     + (f"  \u00b7  *Error:* {n_error}" if n_error > 0 else "")
