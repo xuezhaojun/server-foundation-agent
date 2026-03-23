@@ -31,4 +31,8 @@ _(No entries yet. Add limitations related to missing features or unsupported wor
 
 ## Environmental Constraints
 
-_(No entries yet. Add limitations related to runtime environment, resource limits, or tooling here.)_
+### 1. No Access to Downstream Test Environment or QE Test Clusters
+
+- **Impact**: The agent cannot create downstream (RHACM/MCE) test environments or directly access QE's test clusters. This significantly slows down debugging and issue resolution — the agent cannot reproduce reported bugs in a real downstream environment, verify fixes end-to-end, or inspect cluster state when investigating QE-reported failures.
+- **Workaround**: Users must either reproduce the issue on their own cluster and share logs/state with the agent, or grant the agent kubeconfig access to an existing test cluster. Having a dedicated always-on test cluster with agent access would greatly accelerate the debug-fix cycle.
+- **Date discovered**: 2026-03-23
