@@ -40,6 +40,8 @@ spec:
       git:
         repository: https://github.com/stolostron/server-foundation-agent.git
         ref: main
+        secretRef:
+          name: git-clone-credentials
       mountPath: .
   credentials:
     - name: git
