@@ -13,6 +13,9 @@ Skills are task-specific workflows the agent can execute. Each skill has a step-
 | [sfa-jira-create](sfa-jira-create/SKILL.md) | Create Jira issues in the ACM project with SF defaults | On demand |
 | [sfa-jira-update](sfa-jira-update/SKILL.md) | Update Jira issue status (workflow transitions) and fields | On demand |
 | [sfa-jira-comment](sfa-jira-comment/SKILL.md) | Add comments to Jira issues (PR links, progress updates) | On demand |
+| [sfa-jira-standup](sfa-jira-standup/SKILL.md) | Generate daily standup report from Jira | On demand |
+| [sfa-jira-triage](sfa-jira-triage/SKILL.md) | Generate bug triage report (new/unassigned bugs) | On demand |
+| [sfa-jira-sprint-report](sfa-jira-sprint-report/SKILL.md) | Generate sprint health report with per-member breakdown | On demand |
 | [sfa-session-log](sfa-session-log/SKILL.md) | Log session summary to updates.md (what was done, issues, limitations) | On demand |
 
 ## Adding a New Skill

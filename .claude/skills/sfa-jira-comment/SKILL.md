@@ -5,7 +5,13 @@ description: "Add comments to Jira issues on Red Hat Jira Cloud (redhat.atlassia
 
 # Jira Comment
 
-Add comments to Jira issues on https://redhat.atlassian.net. Designed for workflow integration — linking PRs, logging progress, and posting status updates.
+Add comments to Jira issues. Designed for workflow integration — linking PRs, logging progress, posting status updates.
+
+## Reference Loading
+
+Before executing, load relevant references as needed:
+- **For wiki markup syntax**: Read `docs/jira/formatting.md`
+- **For API details**: Read `docs/jira/api-reference.md`
 
 ## Parameters
 
@@ -13,13 +19,11 @@ Add comments to Jira issues on https://redhat.atlassian.net. Designed for workfl
 |-----------|----------|---------|-------|
 | issue-key | Yes | - | Jira issue key (e.g., `ACM-12345`) |
 | comment | Yes | - | Comment text (supports Jira wiki markup) |
-| pr-url | No | - | GitHub PR URL to format as a structured comment |
+| pr-url | No | - | GitHub PR URL to format as structured comment |
 
 ## Comment Templates
 
 ### PR Link Comment
-
-When a PR URL is provided (or detected from context), format a structured comment:
 
 ```
 PR submitted: [<PR-title>|<PR-URL>]
@@ -32,9 +36,7 @@ Author: <author>
 _— server-foundation-agent_
 ```
 
-### Progress Update Comment
-
-When the user wants to log progress:
+### Progress Update
 
 ```
 *Progress Update* (<date>)
@@ -47,12 +49,7 @@ _— server-foundation-agent_
 
 ### General Comment
 
-For free-form comments, post the text as-is with Jira wiki markup. **Always** append the agent signature footer:
-
-```
-----
-_— server-foundation-agent_
-```
+Post text as-is with wiki markup. **Always** append the agent signature footer.
 
 ## Workflow
 
@@ -60,103 +57,53 @@ _— server-foundation-agent_
 
 ```bash
 curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
-  "https://redhat.atlassian.net/rest/api/2/issue/<ISSUE-KEY>?fields=summary,status" | jq '{key: .key, summary: .fields.summary, status: .fields.status.name}'
+  "https://redhat.atlassian.net/rest/api/2/issue/<KEY>?fields=summary,status" \
+  | jq '{key: .key, summary: .fields.summary, status: .fields.status.name}'
 ```
 
 ### Step 2: Build comment body
 
-If a `pr-url` is provided, fetch PR details from GitHub:
-
+If `pr-url` provided, fetch PR details:
 ```bash
-# Extract org/repo and PR number from URL
 gh pr view <PR-URL> --json title,headRefName,author,url
 ```
 
-Then format the PR link comment using the template above.
+For wiki markup syntax, see `docs/jira/formatting.md`.
 
-For Jira Cloud REST API v2, the comment body uses **plain text with Jira wiki markup** (not ADF):
-
-- Bold: `*text*`
-- Links: `[title|url]`
-- Code: `{{code}}`
-- Headings: `h3. Title`
-
-### Step 3: Post the comment
+### Step 3: Post comment
 
 ```bash
 curl -s -X POST \
   -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{
-    "body": "<comment text with Jira wiki markup>"
-  }' \
-  "https://redhat.atlassian.net/rest/api/2/issue/<ISSUE-KEY>/comment"
+  -d '{"body": "<wiki markup text>"}' \
+  "https://redhat.atlassian.net/rest/api/2/issue/<KEY>/comment"
 ```
 
 ### Step 4: Show confirmation
 
-Display:
-- The issue key and summary
-- The comment that was posted
-- Browse URL: `https://redhat.atlassian.net/browse/<ISSUE-KEY>`
+Display issue key, summary, posted comment, and browse URL.
 
-## PR Lookup from Issue
+## PR Lookup
 
-To check existing PR links on an issue (e.g., when user asks "what PRs are linked to ACM-12345"):
-
-### Check comments for PR URLs
+To check existing PR links on an issue:
 
 ```bash
+# Check comments for PR URLs
 curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
-  "https://redhat.atlassian.net/rest/api/2/issue/<ISSUE-KEY>/comment" | \
+  "https://redhat.atlassian.net/rest/api/2/issue/<KEY>/comment" | \
   jq '.comments[].body' | grep -i "github.com.*pull"
-```
-
-### Check custom fields for PR references
-
-The Git Pull Request field is stored in `customfield_10875`:
-
-```bash
-curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
-  "https://redhat.atlassian.net/rest/api/2/issue/<ISSUE-KEY>" | \
-  jq '.fields | to_entries[] | select(.value != null and (.value | tostring | (contains("github") or contains("pull"))))'
-```
-
-## Examples
-
-```
-# Add a PR link comment
-/sfa-jira-comment --issue-key ACM-12345 --pr-url https://github.com/stolostron/cluster-proxy/pull/99
-
-# Free-form comment
-/sfa-jira-comment --issue-key ACM-12345 --comment "Identified root cause: cert rotation timer not reset after reconnect"
-
-# Natural language
-Post the PR link to ACM-12345
-Add a comment to ACM-12345: fixed the nil pointer in addon manager
-Update ACM-12345 with the PR
-What PRs are linked to ACM-12345?
 ```
 
 ## Integration with Other Skills
 
-This skill works well in combination with other skills:
+- **After PR created**: Auto-comment PR URL, optionally transition to "Review" via `sfa-jira-update`
+- **After PR merged**: Comment "PR merged", transition to "Resolved" via `sfa-jira-update`
+- **During development**: Log progress notes as comments
 
-1. **After creating a PR** (via sfa-workspace-clone + git workflow):
-   - Auto-comment the PR URL on the related Jira issue
-   - Optionally transition the issue to "Review" using `sfa-jira-update`
+## Examples
 
-2. **After PR is merged**:
-   - Comment "PR merged" on the Jira issue
-   - Transition to "Resolved" using `sfa-jira-update`
-
-3. **During development**:
-   - Log progress notes as comments
-   - Transition to "In Progress" using `sfa-jira-update`
-
-## Notes
-
-- Authentication: Basic Auth with `$JIRA_EMAIL` + `$JIRA_API_TOKEN`
-- Jira Cloud REST API v2 comment endpoint uses wiki markup format (not Atlassian Document Format)
-- For v3 endpoints, ADF format is required — use v2 for simplicity
-- Browse URL: `https://redhat.atlassian.net/browse/<ISSUE-KEY>`
+```
+/sfa-jira-comment --issue-key ACM-12345 --pr-url https://github.com/stolostron/cluster-proxy/pull/99
+Add a comment to ACM-12345: fixed the nil pointer in addon manager
+```

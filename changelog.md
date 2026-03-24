@@ -8,6 +8,28 @@ Project changes, architectural decisions, and the reasoning behind them. Each en
 
 ## 2026-03-24
 
+### Adopted progressive disclosure as agent design principle
+
+Refactored documentation and skills architecture based on patterns from the [HCM Jira Administrator Agent](https://github.com/openshift-online/rosa-claude-plugins/tree/main/hcm-jira-administrator-agent). Core insight: context window is a scarce resource — skills should contain workflow steps ("how"), while reference knowledge ("what") lives in separate docs loaded on demand via `Read`.
+
+**Architecture changes:**
+- Top-level docs (`docs/jira.md`, `docs/prow.md`, `docs/build-release.md`, `docs/repo-dependencies.md`) are now slim **indexes** linking to detailed sub-files
+- New reference subdirectories: `docs/jira/` (6 files), `docs/repo-deps/` (2 files), `docs/prow/` (2 files), `docs/build-release/` (2 files)
+- Each Jira SKILL.md includes a "Reference Loading" section listing which docs to load and when
+- Added progressive disclosure guidelines to root CLAUDE.md
+
+**Jira skill improvements:**
+- Slimmed 4 existing Jira SKILL.md files by ~45% (avg 163→89 lines)
+- Added 3 scenario-based skills: `sfa-jira-standup`, `sfa-jira-triage`, `sfa-jira-sprint-report`
+- Added issue templates (`docs/jira/templates.md`) for Bug, Epic, Story, Task, Vulnerability
+- Added JQL reference (`docs/jira/jql-reference.md`) with SF-specific query patterns
+- Added Jira bootstrap sequence (auth pre-flight check)
+
+**Design guidelines added to CLAUDE.md:**
+- SKILL.md should stay under ~100 lines
+- Any doc over 150 lines should be split into sub-files
+- Duplicated content across skills should be extracted to shared reference files
+
 ### Added daily-bug-triage workflow
 
 New automated workflow that triages all Server Foundation Jira bugs in "New" status every weekday at 09:00 CST. For each bug, a sub-agent analyzes the codebase to find the root cause, then a summary is sent to Slack with `@acm-server-foundation` mention.

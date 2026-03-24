@@ -2,6 +2,15 @@
 
 Server Foundation repos use OpenShift CI (Prow) for CI/CD. All configuration lives in the [openshift/release](https://github.com/openshift/release) repo, which is available locally at `repos/openshift/release/`.
 
+## Reference Materials
+
+Load these on-demand based on the task:
+
+| Reference | Path | When to Load |
+|-----------|------|-------------|
+| [Test Types & Cluster Pools](prow/test-types.md) | `docs/prow/test-types.md` | Looking up test types, cluster pool config, CI patterns |
+| [CI Coverage per Repo](prow/ci-coverage.md) | `docs/prow/ci-coverage.md` | Checking which repos have CI configs and branch patterns |
+
 ## Two Key Directories
 
 ### 1. `ci-operator/config/stolostron/<repo>/` — CI Pipeline Definitions
@@ -63,57 +72,6 @@ Tests pass + PR gets approved + lgtm → Tide merges (squash)
        ▼
 Postsubmit jobs run (image mirror, fast-forward, publish)
 ```
-
-## CI Config Coverage per SF Repo
-
-| Repository | CI Config Files | Prow Config | Branch Pattern |
-|------------|:-:|:-:|----------------|
-| ocm | 10 | Yes | `backplane-*` |
-| managedcluster-import-controller | 9 | Yes | `backplane-*` |
-| multicloud-operators-foundation | 9 | No (org defaults) | `backplane-*` |
-| cluster-proxy | 13 | Yes | `backplane-*` |
-| clusterlifecycle-state-metrics | 12 | Yes | `backplane-*` |
-| managed-serviceaccount | 14 | Yes | `backplane-*` |
-| cluster-proxy-addon | 10 | Yes | `backplane-*` |
-| klusterlet-addon-controller | 9 | Yes | `release-*` |
-| cluster-permission | 10 | Yes | `release-*` |
-| multicluster-role-assignment | 4 | Yes | `release-*` |
-| backplane-operator | 8 | Yes | `backplane-*` |
-
-## Common Test Types
-
-| Test | Type | Description |
-|------|------|-------------|
-| `verify` | Container | Code linting and formatting |
-| `verify-deps` | Container | Dependency validation |
-| `unit` | Container | Unit tests (`make test`) |
-| `integration` | Container | Integration tests |
-| `e2e` | Multi-stage | End-to-end tests using SF cluster pools |
-| `sonar-pre-submit` | Multi-stage | SonarCloud analysis on PR |
-| `sonar-post-submit` | Multi-stage | SonarCloud analysis after merge |
-| `pr-image-mirror` | Multi-stage | Mirror PR images to quay.io |
-| `pr-merge-image-mirror` | Postsubmit | Mirror merged images to quay.io |
-| `fast-forward` | Postsubmit | Auto-merge main → latest release branch |
-| `publish` | Postsubmit | Publish to OSCI pipeline |
-
-## Cluster Pool Configuration
-
-All SF e2e tests use the shared Server Foundation cluster pool:
-
-```yaml
-CLUSTERPOOL_GROUP_NAME: Server Foundation
-CLUSTERPOOL_HOST_NAMESPACE: server-foundation
-CLUSTERPOOL_HOST_PROW_KUBE_SECRET: ocm-sf-clusterpool
-CLUSTERPOOL_LIFETIME: 2h
-CLUSTERPOOL_LIST_INCLUSION_FILTER: prow
-```
-
-## Key Patterns
-
-- **Fast-forward**: Most repos auto-merge `main` to their latest release branch (e.g. `backplane-2.17` or `release-2.17`) via postsubmit jobs
-- **Skip conditions**: Tests skip on doc-only changes (`*.md`, `docs/`, `OWNERS`, `LICENSE`, `.tekton/`)
-- **Multi-arch**: Some repos (e.g. multicloud-operators-foundation) build ARM64 images in addition to AMD64
-- **Image promotion**: Main branch promotion is typically `disabled: true`; images are pushed via `pr-merge-image-mirror` workflow instead. Release branches actively promote to the `stolostron` namespace
 
 ## File Path Reference
 

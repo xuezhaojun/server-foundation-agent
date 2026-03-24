@@ -11,6 +11,31 @@ Built on the **repo-as-agent** pattern: the repo **is** the agent. `README.md` d
 3. **Avoid complex escaping.** If a command requires tricky quoting, break it into smaller steps.
 4. **Read your skills and solutions.** Check `.claude/skills/` for task-specific workflows and `solutions/` for problem-oriented SOPs before starting work.
 5. **Follow the checklist.** Each skill has a step-by-step checklist — execute it in order.
+6. **Progressive disclosure.** Only load context that the current task needs. See below.
+
+## Progressive Disclosure (CRITICAL)
+
+Context window is a scarce resource. Do NOT front-load all knowledge — load it on demand.
+
+**For skills:**
+- SKILL.md contains **how** (workflow steps, parameters, output format) — keep it under ~100 lines
+- Detailed **knowledge** (field mappings, syntax references, templates) lives in `docs/` reference files
+- Each SKILL.md includes a "Reference Loading" section listing which `docs/` files to `Read` and when
+
+**For docs:**
+- Top-level docs (`docs/jira.md`, `docs/prow.md`, `docs/build-release.md`, `docs/repo-dependencies.md`) are **indexes** — compact summaries with links to detailed sub-files
+- Detailed reference files live in subdirectories (`docs/jira/`, `docs/prow/`, `docs/build-release/`, `docs/repo-deps/`)
+- Load sub-files only when the task requires that specific knowledge
+
+**When adding new skills or docs:**
+- Ask: "Does the agent need this knowledge for every invocation, or only sometimes?"
+- If sometimes → put it in a reference file and link to it from the skill or index doc
+- If always → keep it inline, but keep it concise
+
+**When reviewing or refactoring:**
+- Any SKILL.md over 120 lines likely embeds knowledge that should be extracted to a reference file
+- Any doc over 150 lines likely covers multiple topics that should be split into sub-files
+- Duplicated content across multiple skills should be extracted to a shared reference file
 
 ## Skills
 
@@ -31,10 +56,14 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | Document | Description |
 |----------|-------------|
 | [docs/repos.md](docs/repos.md) | SF repo inventory, MCE/ACM classification, submodule management |
-| [docs/build-release.md](docs/build-release.md) | Build & release: active branches, MCE vs ACM build differences |
-| [docs/prow.md](docs/prow.md) | OpenShift CI (Prow) configuration guide |
-| [docs/jira.md](docs/jira.md) | Jira integration: auth, custom fields, workflow, REST API reference |
-| [docs/repo-dependencies.md](docs/repo-dependencies.md) | SF repo dependency relationships and upgrade guidance |
+| [docs/build-release.md](docs/build-release.md) | Build & release index (links to `docs/build-release/`) |
+| [docs/build-release/](docs/build-release/) | Build reference: branch tables, MCE vs ACM build differences |
+| [docs/prow.md](docs/prow.md) | Prow/CI index (links to `docs/prow/`) |
+| [docs/prow/](docs/prow/) | Prow reference: test types, cluster pools, CI coverage per repo |
+| [docs/jira.md](docs/jira.md) | Jira integration index (links to reference files under `docs/jira/`) |
+| [docs/jira/](docs/jira/) | Jira reference: custom fields, workflows, formatting, JQL, API, templates |
+| [docs/repo-dependencies.md](docs/repo-dependencies.md) | Repo dependency index (links to `docs/repo-deps/`) |
+| [docs/repo-deps/](docs/repo-deps/) | Repo deps reference: per-repo details, version alignment |
 | [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email) |
 | [team-members/member-ownership.md](team-members/member-ownership.md) | Component/repository ownership mapping |
 | [docs/deployment.md](docs/deployment.md) | Architecture, cluster deployment, and local development |

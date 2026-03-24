@@ -8,6 +8,14 @@ Use `/sfa-session-log` to append entries after each session.
 
 ---
 
+## 2026-03-24
+
+- Adopted **progressive disclosure** as a core agent design principle. Inspired by [HCM Jira Administrator Agent](https://github.com/openshift-online/rosa-claude-plugins/tree/main/hcm-jira-administrator-agent).
+- Refactored all Jira skills: split `docs/jira.md` into 6 reference files under `docs/jira/`, slimmed 4 SKILL.md files by ~45%.
+- Added 3 new scenario-based Jira skills: `sfa-jira-standup`, `sfa-jira-triage`, `sfa-jira-sprint-report`.
+- Applied progressive disclosure to `docs/repo-dependencies.md` (393→~150 lines index + sub-files), `docs/prow.md`, `docs/build-release.md`.
+- Added progressive disclosure section to root CLAUDE.md as permanent design guideline.
+
 ## 2026-03-23
 
 - Fixed 2 cluster-permission bugs. Root cause tied to recent ACM→MCE migration.

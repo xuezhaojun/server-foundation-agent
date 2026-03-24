@@ -5,77 +5,49 @@ description: "Create Jira issues in the ACM project on Red Hat Jira Cloud (redha
 
 # Jira Create
 
-Create Jira issues in the ACM project on https://redhat.atlassian.net for the Server Foundation team.
+Create Jira issues in the ACM project for the Server Foundation team.
+
+## Reference Loading
+
+Before executing, load relevant references:
+- **For custom fields and activity type mapping**: Read `docs/jira/custom-fields.md`
+- **For issue templates**: Read `docs/jira/templates.md`
+- **For API details**: Read `docs/jira/api-reference.md`
 
 ## Parameters
-
-Parse these from the user's message or arguments:
 
 | Parameter | Required | Default | Notes |
 |-----------|----------|---------|-------|
 | type | Yes | - | `Epic`, `Bug`, `Task`, `Story`, `Feature`, `Initiative` |
 | summary | Yes | - | Issue title |
-| description | No | - | Issue body/description |
-| assignee | No | current user | Team member name/email. Resolved via `team-members/team-members.md` |
-| component | No | `Server Foundation` | Component field |
-| affects-version | **Yes** | - | Format: `MCE X.YY.Z` (e.g., `MCE 2.14.0`) |
-| fix-version | **Yes** | - | Format: `MCE X.YY.Z` (e.g., `MCE 2.14.0`) |
-| priority | No | `Major` | Issue priority |
-| severity | No | `Important` | Custom field `customfield_10840` |
-| activity-type | **Yes** | auto-mapped | Custom field `customfield_10464`. See mapping below |
-| link | No | - | Another Jira issue key to link to (e.g., `ACM-29991`) |
+| description | No | - | Issue body (use template from `docs/jira/templates.md`) |
+| assignee | No | current user | Resolved via `team-members/team-members.md` |
+| component | No | `Server Foundation` | |
+| affects-version | **Yes** | - | Format: `MCE X.YY.Z` |
+| fix-version | **Yes** | - | Format: `MCE X.YY.Z` |
+| priority | No | `Major` | |
+| severity | No | `Important` | `customfield_10840` |
+| activity-type | **Yes** | auto-mapped | `customfield_10464` (see `docs/jira/custom-fields.md`) |
+| link | No | - | Issue key to link to |
 | link-type | No | `Relates` | `Relates`, `Blocks`, `Duplicates`, `is child of` |
-
-### Version Shortcuts
-
-Users often express versions in natural language:
-
-- **"在 MCE 2.14.0 实现"** or **"for MCE 2.14.0"** → both versions = `MCE 2.14.0`
-- **"MCE 2.13.0 发现的问题，2.14.0 fix"** → affects=`MCE 2.13.0`, fix=`MCE 2.14.0`
-- **"found in 2.13, fix in 2.14"** → affects=`MCE 2.13.0`, fix=`MCE 2.14.0`
-
-When only a single version is mentioned (not for a Bug), assume both are the same.
-
-### Activity Type (required)
-
-Auto-map based on issue type if not specified:
-
-| Issue Type | Default Activity Type |
-|------------|----------------------|
-| Bug | Quality / Stability / Reliability |
-| Vulnerability | Security & Compliance |
-| Story / Feature / Epic / Initiative | Product / Portfolio Work |
-| Task | Quality / Stability / Reliability |
-| Spike | Future Sustainability |
-
-Valid values:
-- Associate Wellness & Development
-- Incidents & Support
-- Security & Compliance
-- Quality / Stability / Reliability
-- Future Sustainability
-- Product / Portfolio Work
-
-Always tell the user which Activity Type was selected.
 
 ## Workflow
 
 ### Step 1: Validate required fields
 
-1. Check `affects-version` and `fix-version` — prompt if missing:
-   > To create this Jira issue, I need:
-   > - **Affects Version/s**: Which version is affected? (e.g., `MCE 2.14.0`)
-   > - **Fix Version/s**: Which version should contain the fix? (e.g., `MCE 2.14.0`)
-2. Auto-map `activity-type` if not specified. Tell the user which was selected.
-3. If `assignee` is specified, resolve to email via `team-members/team-members.md`.
+1. Check `affects-version` and `fix-version` — prompt if missing
+2. Auto-map `activity-type` from issue type if not specified (see `docs/jira/custom-fields.md`)
+3. Resolve `assignee` to email if specified
 
 Do NOT proceed until required fields are provided.
 
-### Step 2: Create the issue via REST API
+### Step 2: Create via REST API
 
-**IMPORTANT**: Do NOT use `jira issue create` CLI for option-type custom fields. Use the REST API directly.
+Use REST API directly (CLI cannot set option-type custom fields).
 
-**For Epic type**: Include `customfield_10011` (Epic Name) set to summary value.
+For **Epic**: also set `customfield_10011` (Epic Name) = summary.
+
+Use the template from `docs/jira/templates.md` for the description if user didn't provide one.
 
 ```bash
 cat > /tmp/jira_create.json << 'ENDOFJSON'
@@ -84,15 +56,14 @@ cat > /tmp/jira_create.json << 'ENDOFJSON'
     "project": {"key": "ACM"},
     "issuetype": {"name": "<Type>"},
     "summary": "<Summary>",
-    "description": "<Description or empty string>\n\n----\n_Created by server-foundation-agent_",
+    "description": "<Description>\n\n----\n_Created by server-foundation-agent_",
     "priority": {"name": "<Priority>"},
     "labels": ["sfa-assisted"],
     "components": [{"name": "<Component>"}],
     "versions": [{"name": "<affects-version>"}],
     "fixVersions": [{"name": "<fix-version>"}],
     "customfield_10840": {"value": "<Severity>"},
-    "customfield_10464": {"value": "<Activity Type>"},
-    "customfield_10011": "<Epic Name, only for Epic type>"
+    "customfield_10464": {"value": "<Activity Type>"}
   }
 }
 ENDOFJSON
@@ -104,59 +75,32 @@ curl -s -X POST \
   "https://redhat.atlassian.net/rest/api/2/issue"
 ```
 
-Notes:
-- For **Epic**: include `customfield_10011`. Omit for non-Epic types.
-- `versions` = Affects Version/s field
-- `fixVersions` = Fix Version/s field
-- Valid Severity: `Critical`, `Important`, `Moderate`, `Low`, `Informational`
-
-Extract the issue key from the response (`key` field).
-
-### Step 3: Assign the issue (if specified)
-
-If assignee is specified and differs from current user:
+### Step 3: Assign (if specified)
 
 ```bash
-curl -s -X PUT \
-  -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+curl -s -X PUT -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"fields": {"assignee": {"name": "<email>"}}}' \
-  "https://redhat.atlassian.net/rest/api/2/issue/<ISSUE-KEY>"
+  "https://redhat.atlassian.net/rest/api/2/issue/<KEY>"
 ```
 
-### Step 4: Link the issue (if requested)
+### Step 4: Link (if requested)
 
 ```bash
-jira issue link <NEW-ISSUE-KEY> <LINK-TARGET> <link-type>
+jira issue link <NEW-KEY> <LINK-TARGET> <link-type>
 ```
 
-### Step 5: Show the result
+### Step 5: Show result
 
 ```bash
-jira issue view <NEW-ISSUE-KEY>
+jira issue view <NEW-KEY>
 ```
 
-Provide the browse URL: `https://redhat.atlassian.net/browse/<NEW-ISSUE-KEY>`
+Provide browse URL: `https://redhat.atlassian.net/browse/<KEY>`
 
 ## Examples
 
 ```
-# Full example
-/sfa-jira-create --type task --summary "Fix cluster-proxy cert rotation" --affects-version "MCE 2.14.0" --fix-version "MCE 2.14.0" --assignee zhiwei --link ACM-29991
-
-# Minimal (will prompt for versions)
-/sfa-jira-create --type bug --summary "Proxy agent crash on restart"
-
-# Natural language
+/sfa-jira-create --type bug --summary "Proxy agent crash on restart" --affects-version "MCE 2.14.0" --fix-version "MCE 2.14.0"
 Create a jira bug for the cluster-proxy crash issue, affects MCE 2.14.0, assign to zhiwei
-File a task to upgrade go dependencies for MCE 2.15.0
 ```
-
-## Notes
-
-- Project is always `ACM`
-- Custom fields: Severity(`customfield_10840`), Activity Type(`customfield_10464`), Epic Name(`customfield_10011`)
-- Authentication: Basic Auth with `$JIRA_EMAIL` + `$JIRA_API_TOKEN`
-- Valid issue types: Epic, Bug, Task, Story, Feature, Initiative, Spike, Vulnerability
-- Always capitalize issue type names
-- Browse URL: `https://redhat.atlassian.net/browse/<ISSUE-KEY>`
