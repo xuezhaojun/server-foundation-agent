@@ -11,9 +11,10 @@ then send a summary Slack notification every weekday morning.
 ## Workflow Phases
 
 ```
-Phase 1: Collect    →  Phase 2: Analyze        →  Phase 2.5: Auto-Fix     →  Phase 3: Report    →  Phase 3.5: Jira     →  Phase 4: Distribute
-sfa-jira-search        sub-agents per bug          draft PR for               generate Slack         post full analysis      sfa-slack-notify
-(status=New, type=Bug)  (codebase deep-dive)        high-confidence bugs       payload                as Jira comments
+Phase 1: Collect    →  Phase 1.5: Dedup     →  Phase 2: Analyze        →  Phase 2.5: Auto-Fix     →  Phase 3: Report    →  Phase 3.5: Jira     →  Phase 4: Distribute
+sfa-jira-search        check Jira comments      sub-agents per bug          draft PR for               generate Slack         post full analysis      sfa-slack-notify
+(status=New, type=Bug)  for prior agent           (codebase deep-dive)        high-confidence bugs       payload                as Jira comments
+                        analysis
 ```
 
 ---
@@ -104,6 +105,40 @@ If no bugs are found (`len(bugs) == 0`), skip Phases 2-3 and send a simple "no n
 
 ---
 
+## Phase 1.5: Dedup — Skip Previously Analyzed Bugs
+
+Bugs can stay in "New" status for days (PTO, meetings, etc.). Before spawning analysis sub-agents, check Jira comments to see if the agent has already analyzed each bug. This avoids redundant work and API calls.
+
+### 1.5.1 Check Prior Analysis
+
+```bash
+python3 workflows/daily-bug-triage/check_prior_analysis.py \
+  .output/bug-triage/new_bugs.json \
+  .output/bug-triage/bugs_to_analyze.json \
+  .output/bug-triage/bugs_previously_analyzed.json
+```
+
+The script:
+- Fetches comments for each bug via Jira REST API
+- Looks for comments containing both `"server-foundation-agent"` and `"Bug Triage Analysis"` (the signature left by Phase 3.5)
+- Splits bugs into two lists:
+  - **`bugs_to_analyze.json`** — no prior analysis found → proceed to Phase 2
+  - **`bugs_previously_analyzed.json`** — already analyzed → skip to report
+
+### 1.5.2 Use Filtered List
+
+From this point forward, Phase 2 and Phase 2.5 operate on `bugs_to_analyze.json` (NOT the original `new_bugs.json`).
+
+Previously analyzed bugs are included in the Slack report (Phase 3) under a separate "Previously Analyzed" section so the team is aware they are still in "New" status and may need attention.
+
+### 1.5.3 Skip Conditions
+
+Skip this phase (treat all bugs as new) if:
+- `JIRA_EMAIL` or `JIRA_API_TOKEN` are not set (cannot fetch comments)
+- Environment variable `SKIP_DEDUP=1` is set (manual override)
+
+---
+
 ## Phase 2: Analyze Each Bug (Sub-Agents)
 
 For each bug, spawn a **sub-agent** to perform a deep-dive analysis against the codebase. This prevents context window exhaustion when analyzing multiple bugs.
@@ -123,7 +158,7 @@ Each sub-agent:
 Use the Agent tool to spawn each sub-agent:
 
 ```
-For each bug in new_bugs.json:
+For each bug in bugs_to_analyze.json (filtered by Phase 1.5):
   Agent(
     subagent_type: "general-purpose",
     description: "Analyze bug <KEY>",
@@ -271,7 +306,8 @@ Read all `bug-*.json` files from `.output/bug-triage/analyses/` directory.
 ```bash
 python3 workflows/daily-bug-triage/generate_slack_payload.py \
   .output/bug-triage/analyses/ \
-  .output/bug-triage/slack_payload.json
+  .output/bug-triage/slack_payload.json \
+  --previously-analyzed .output/bug-triage/bugs_previously_analyzed.json
 ```
 
 ---
@@ -310,6 +346,7 @@ bash .claude/skills/sfa-slack-notify/send_to_slack.sh .output/bug-triage/slack_p
 ```
 
 **Dependencies**:
+- `workflows/daily-bug-triage/check_prior_analysis.py`
 - `workflows/daily-bug-triage/generate_slack_payload.py`
 - `workflows/daily-bug-triage/post_jira_comments.py`
 - `.claude/skills/sfa-slack-notify/send_to_slack.sh`
@@ -325,7 +362,7 @@ bash .claude/skills/sfa-slack-notify/send_to_slack.sh .output/bug-triage/slack_p
 
 ### Summary
 ```
-*Summary:* {N} new bugs analyzed · {n} draft PRs submitted
+*Summary:* {N} new bugs analyzed · {n} draft PRs submitted · {n} still in New (previously analyzed)
 *Root cause found:* {n}  ·  *Partial:* {n}  ·  *Needs info:* {n}
 ```
 
@@ -364,6 +401,14 @@ For each bug, grouped by `analysis_status`:
 *🔴 Needs More Info ({n})*
 • <url|ACM-12347> *Normal* — Random cluster proxy disconnections
   _Reason:_ Bug description lacks reproduction steps and environment details
+```
+
+**Previously Analyzed (still in New):**
+```
+*⏳ Still in New — Previously Analyzed ({n})*
+_These bugs were analyzed in a prior triage run but remain in New status. They may need assignee attention._
+• <url|ACM-12348> *Major* — Addon install fails on SNO
+  _Assignee:_ Le Yang · _Created:_ 2026-03-18 · _Still in New_
 ```
 
 ### Context Footer

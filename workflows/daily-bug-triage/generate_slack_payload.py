@@ -2,9 +2,10 @@
 """Generate Slack Block Kit payload from bug triage analysis results.
 
 Usage:
-    python3 workflows/daily-bug-triage/generate_slack_payload.py <analyses_dir> <output_payload.json>
+    python3 workflows/daily-bug-triage/generate_slack_payload.py <analyses_dir> <output_payload.json> [--previously-analyzed <skipped_bugs.json>]
 
 Input:  Directory containing bug-*.json analysis result files
+        Optional: JSON file with bugs that were previously analyzed (from Phase 1.5 dedup)
 Output: Slack Block Kit JSON payload file
 """
 import json
@@ -122,13 +123,40 @@ def format_insufficient_bug(a):
     return "\n".join(lines)
 
 
+def format_previously_analyzed_bug(bug):
+    """Format a bug that was already analyzed in a prior triage run."""
+    priority_em = PRIORITY_EMOJI.get(bug.get('priority', ''), '')
+    summary = escape_mrkdwn(bug.get('summary', ''))
+    if len(summary) > 60:
+        summary = summary[:59] + "\u2026"
+    url = bug.get('url', '')
+    key = bug.get('key', '')
+    assignee = bug.get('assignee', 'Unassigned')
+    created = bug.get('created', '')[:10]
+
+    lines = [f"\u2022 <{url}|{key}> {priority_em} *{bug.get('priority', '')}* \u2014 {summary}"]
+    lines.append(f"     _Assignee:_ {assignee} \u00b7 _Created:_ {created} \u00b7 _Still in New_")
+    return "\n".join(lines)
+
+
 def main():
     if len(sys.argv) < 3:
-        print("Usage: generate_slack_payload.py <analyses_dir> <output.json>", file=sys.stderr)
+        print("Usage: generate_slack_payload.py <analyses_dir> <output.json> [--previously-analyzed <skipped.json>]", file=sys.stderr)
         sys.exit(1)
 
     analyses_dir = sys.argv[1]
     output_file = sys.argv[2]
+
+    # Parse optional --previously-analyzed flag
+    previously_analyzed = []
+    args = sys.argv[3:]
+    if "--previously-analyzed" in args:
+        idx = args.index("--previously-analyzed")
+        if idx + 1 < len(args):
+            pa_file = args[idx + 1]
+            if os.path.exists(pa_file):
+                with open(pa_file, 'r') as f:
+                    previously_analyzed = json.load(f)
 
     analyses = load_analyses(analyses_dir)
     today = datetime.date.today().isoformat()
@@ -144,12 +172,25 @@ def main():
     n_insufficient = len(by_status.get("insufficient-info", []))
     n_error = len(by_status.get("error", []))
     n_draft_prs = sum(1 for a in analyses if a.get('draft_pr_url'))
+    n_previously_analyzed = len(previously_analyzed)
 
     fallback_text = (
         f"SF Daily Bug Triage \u2014 {today}: "
-        f"{total} new bugs, {n_root_cause} root cause found, "
+        f"{total} new bugs analyzed, {n_root_cause} root cause found, "
         f"{n_draft_prs} draft PRs, "
         f"{n_partial} partial, {n_insufficient} needs info"
+        + (f", {n_previously_analyzed} previously analyzed" if n_previously_analyzed > 0 else "")
+    )
+
+    summary_text = (
+        f"{SF_GROUP_MENTION}\n"
+        f"*Summary:* {total} new bug{'s' if total != 1 else ''} analyzed"
+        + (f" \u00b7 {n_draft_prs} draft PR{'s' if n_draft_prs != 1 else ''} submitted" if n_draft_prs > 0 else "")
+        + (f" \u00b7 {n_previously_analyzed} still in New (previously analyzed)" if n_previously_analyzed > 0 else "")
+        + f"\n*Root cause found:* {n_root_cause}  \u00b7  "
+        f"*Partial:* {n_partial}  \u00b7  "
+        f"*Needs info:* {n_insufficient}"
+        + (f"  \u00b7  *Error:* {n_error}" if n_error > 0 else "")
     )
 
     blocks = [
@@ -164,15 +205,7 @@ def main():
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": (
-                    f"{SF_GROUP_MENTION}\n"
-                    f"*Summary:* {total} new bug{'s' if total != 1 else ''} analyzed"
-                    + (f" \u00b7 {n_draft_prs} draft PR{'s' if n_draft_prs != 1 else ''} submitted" if n_draft_prs > 0 else "")
-                    + f"\n*Root cause found:* {n_root_cause}  \u00b7  "
-                    f"*Partial:* {n_partial}  \u00b7  "
-                    f"*Needs info:* {n_insufficient}"
-                    + (f"  \u00b7  *Error:* {n_error}" if n_error > 0 else "")
-                )
+                "text": summary_text
             }
         },
         {"type": "divider"}
@@ -218,8 +251,16 @@ def main():
             text += f"\u2022 <{a['url']}|{a['key']}> \u2014 {summary}\n     _Error:_ {notes}\n"
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
 
+    # --- Previously Analyzed (still in New) ---
+    if previously_analyzed:
+        text = f"*\u23f3 Still in New \u2014 Previously Analyzed ({n_previously_analyzed})*\n"
+        text += "_These bugs were analyzed in a prior triage run but remain in New status. They may need assignee attention._\n"
+        text += "\n".join(format_previously_analyzed_bug(b) for b in previously_analyzed)
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
+        blocks.append({"type": "divider"})
+
     # --- No bugs case ---
-    if total == 0:
+    if total == 0 and not previously_analyzed:
         blocks.append({
             "type": "section",
             "text": {
