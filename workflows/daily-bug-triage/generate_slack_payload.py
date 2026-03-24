@@ -56,10 +56,12 @@ def format_root_cause_bug(a):
     files_str = ', '.join(f"`{f.split('/')[-1]}`" for f in files[:3]) if files else '_none_'
     lines.append(f"     _Repo:_ {short_repo} \u00b7 _Files:_ {files_str}")
 
-    # Root cause
+    # Root cause (concise for Slack; full details in Jira comment)
     root_cause = escape_mrkdwn(a.get('root_cause', ''))
+    truncated = False
     if len(root_cause) > 200:
         root_cause = root_cause[:199] + "\u2026"
+        truncated = True
     lines.append(f"     _Cause:_ {root_cause}")
 
     # Suggested fix
@@ -68,7 +70,11 @@ def format_root_cause_bug(a):
         fix = escape_mrkdwn(fix)
         if len(fix) > 150:
             fix = fix[:149] + "\u2026"
+            truncated = True
         lines.append(f"     _Fix:_ {fix}")
+
+    if truncated:
+        lines.append(f"     \U0001f4ac _Full analysis in <{a['url']}|Jira comment>_")
 
     # Draft PR link (from Phase 2.5 auto-fix)
     draft_pr_url = a.get('draft_pr_url', '')

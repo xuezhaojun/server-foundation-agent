@@ -11,9 +11,9 @@ then send a summary Slack notification every weekday morning.
 ## Workflow Phases
 
 ```
-Phase 1: Collect    →  Phase 2: Analyze        →  Phase 2.5: Auto-Fix     →  Phase 3: Report    →  Phase 4: Distribute
-sfa-jira-search        sub-agents per bug          draft PR for               generate Slack         sfa-slack-notify
-(status=New, type=Bug)  (codebase deep-dive)        high-confidence bugs       payload
+Phase 1: Collect    →  Phase 2: Analyze        →  Phase 2.5: Auto-Fix     →  Phase 3: Report    →  Phase 3.5: Jira     →  Phase 4: Distribute
+sfa-jira-search        sub-agents per bug          draft PR for               generate Slack         post full analysis      sfa-slack-notify
+(status=New, type=Bug)  (codebase deep-dive)        high-confidence bugs       payload                as Jira comments
 ```
 
 ---
@@ -276,6 +276,31 @@ python3 workflows/daily-bug-triage/generate_slack_payload.py \
 
 ---
 
+## Phase 3.5: Post Full Analysis to Jira
+
+After generating the Slack payload, post the complete (non-truncated) analysis as a Jira comment on each bug. This ensures the full root cause, suggested fix, and relevant files are available directly on the Jira issue — the Slack notification only contains a concise summary.
+
+### 3.5.1 Post Comments
+
+```bash
+python3 workflows/daily-bug-triage/post_jira_comments.py \
+  .output/bug-triage/analyses/
+```
+
+The script:
+- Reads each `bug-*.json` from the analyses directory
+- Builds a Jira wiki markup comment with the full root cause, suggested fix, relevant files, and draft PR link
+- Posts the comment via Jira REST API v2
+- Skips bugs with `analysis_status == "error"`
+
+### 3.5.2 Skip Conditions
+
+Skip this phase if:
+- `JIRA_EMAIL` or `JIRA_API_TOKEN` are not set
+- No analysis files exist
+
+---
+
 ## Phase 4: Distribute
 
 Send the Slack payload:
@@ -286,6 +311,7 @@ bash .claude/skills/sfa-slack-notify/send_to_slack.sh .output/bug-triage/slack_p
 
 **Dependencies**:
 - `workflows/daily-bug-triage/generate_slack_payload.py`
+- `workflows/daily-bug-triage/post_jira_comments.py`
 - `.claude/skills/sfa-slack-notify/send_to_slack.sh`
 
 ---
