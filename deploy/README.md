@@ -1,10 +1,23 @@
 # Deployment Guide
 
-## Prerequisites
+## Architecture
 
-- Kubernetes cluster with [KubeOpenCode](https://kubeopencode.io) operator installed
-- `kubectl` and `kustomize` CLI tools
-- GitHub App credentials for the bot
+```
+┌─────────────────────────────────────┐
+│  server-foundation namespace        │
+│                                     │
+│  ┌───────────────────────────────┐  │
+│  │  Agent: server-foundation-agent│  │
+│  │  (repo-as-agent)              │  │
+│  └───────────────────────────────┘  │
+│  ┌───────────────────────────────┐  │
+│  │  CronJob: weekly-pr-report    │  │
+│  └───────────────────────────────┘  │
+│  ┌───────────────────────────────┐  │
+│  │  Tasks (created by CronJobs)  │  │
+│  └───────────────────────────────┘  │
+└─────────────────────────────────────┘
+```
 
 ## Platform
 
@@ -16,9 +29,13 @@ The resources in this directory (`Agent`, `Task`, `TaskTemplate`) are custom res
 | `Task` | `kubeopencode.io/v1alpha1` | A unit of work assigned to an agent |
 | `TaskTemplate` | `kubeopencode.io/v1alpha1` | Reusable task definition |
 
-## Namespace
-
 All resources are deployed to a single `server-foundation` namespace.
+
+## Prerequisites
+
+- Kubernetes cluster with [KubeOpenCode](https://kubeopencode.io) operator installed
+- `kubectl` and `kustomize` CLI tools
+- GitHub App credentials for the bot
 
 ## Setup
 
@@ -84,4 +101,33 @@ kubectl get cronjobs -n server-foundation
 
 # View recent jobs
 kubectl get jobs -n server-foundation --sort-by=.metadata.creationTimestamp
+```
+
+## Local Development
+
+To run the agent locally with the same secrets used in the cluster, use [direnv](https://direnv.net/) to auto-load environment variables from `deploy/secrets.yaml`.
+
+**Setup (one-time):**
+
+```bash
+# 1. Install direnv
+brew install direnv
+
+# 2. Add hook to your shell (zsh)
+echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
+source ~/.zshrc
+
+# 3. Generate .env from K8s secrets
+yq eval-all '.stringData // {} | to_entries[] | .key + "=" + "\"" + (.value | sub("\n$","") ) + "\""' deploy/secrets.yaml | grep -v '^---$' > .env
+
+# 4. Allow direnv for this directory
+direnv allow
+```
+
+After this, entering the project directory will automatically export all secrets as environment variables. The `.env` and `.envrc` files are git-ignored.
+
+**Regenerate after secrets change:**
+
+```bash
+yq eval-all '.stringData // {} | to_entries[] | .key + "=" + "\"" + (.value | sub("\n$","") ) + "\""' deploy/secrets.yaml | grep -v '^---$' > .env
 ```

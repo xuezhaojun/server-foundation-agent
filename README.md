@@ -47,7 +47,7 @@ See [`solutions/README.md`](solutions/README.md) for the full solutions catalog.
 
 ## Architecture
 
-See [docs/deployment.md](docs/deployment.md) for architecture diagram, cluster deployment, and local development setup.
+See [deploy/README.md](deploy/README.md) for architecture diagram, cluster deployment, and local development setup.
 
 ## Documentation Index
 
@@ -66,8 +66,7 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [docs/repo-deps/](docs/repo-deps/) | Repo deps reference: per-repo details, version alignment |
 | [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email) |
 | [team-members/member-ownership.md](team-members/member-ownership.md) | Component/repository ownership mapping |
-| [docs/deployment.md](docs/deployment.md) | Architecture, cluster deployment, and local development |
-| [deploy/README.md](deploy/README.md) | Cluster deployment setup (secrets, kustomize, monitoring) |
+| [deploy/README.md](deploy/README.md) | Architecture, cluster deployment, local development, and monitoring |
 | [docs/development-guide.md](docs/development-guide.md) | Development standards (commits, PRs, code style) |
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
 | [updates.md](updates.md) | Daily development log: session summaries, issues, limitations |
