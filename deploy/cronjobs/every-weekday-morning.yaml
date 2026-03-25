@@ -1,5 +1,5 @@
 # CronJob: Every Weekday Morning
-# Creates a Task for the daily bug triage workflow
+# Creates Tasks for daily bug triage and scrum prep workflows
 # Schedule: Weekday 09:00 CST (UTC+8) = 01:00 UTC
 # Test:
 #   kubectl create job test-weekday-morning --from=cronjob/every-weekday-morning-cron -n server-foundation
@@ -38,6 +38,7 @@ spec:
                   # Add workflow files here to run every weekday morning
                   WORKFLOWS="
                     workflows/daily-bug-triage.md
+                    workflows/daily-scrum-prep.md
                   "
 
                   for workflow in $WORKFLOWS; do
