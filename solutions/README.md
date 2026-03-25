@@ -23,7 +23,7 @@ Just like a student flips through their error notebook when stuck on a similar p
 
 | Solution | Description |
 |----------|-------------|
-| [SOP-older-branch-dep-upgrade](SOP-older-branch-dep-upgrade.md) | CVE-driven dependency upgrades on older release branches |
+| [older-branch-dep-upgrade](older-branch-dep-upgrade.md) | CVE-driven dependency upgrades on older release branches |
 | [ocm-dependency-versions](ocm-dependency-versions.md) | OCM upstream dependency version survey and analysis |
 | [import-klusterlet-validation-error](import-klusterlet-validation-error.md) | ManagedCluster import stuck due to kubectl/oc version incompatibility with Klusterlet CRD |
 | [clock-sync-kind-cluster-limitation](clock-sync-kind-cluster-limitation.md) | Cannot test clock sync issues with kind clusters — must use OCP hub + macOS time change |
