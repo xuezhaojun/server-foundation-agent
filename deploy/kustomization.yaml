@@ -5,6 +5,7 @@ resources:
   - namespace.yaml
   - rbac.yaml
   - agent.yaml
+  - agent-live.yaml
   - secrets.yaml
   - cronjobs/every-monday-morning.yaml
   - cronjobs/every-weekday-morning.yaml

@@ -1,0 +1,61 @@
+# Copyright Contributors to the KubeOpenCode project
+# Server-mode agent for interactive/long-running use cases
+# Runs as a persistent OpenCode server (Deployment + Service)
+apiVersion: kubeopencode.io/v1alpha1
+kind: Agent
+metadata:
+  name: server-foundation-agent-live
+  namespace: server-foundation
+  labels:
+    app.kubernetes.io/name: server-foundation-agent-live
+    app.kubernetes.io/part-of: server-foundation-agent
+spec:
+  profile: |
+    Server Foundation team agent (server mode) for interactive tasks and long-running workflows.
+  agentImage: quay.io/kubeopencode/kubeopencode-agent-opencode:latest
+  executorImage: quay.io/kubeopencode/kubeopencode-agent-devbox:latest
+  workspaceDir: /workspace
+  serviceAccountName: server-foundation-agent
+  maxConcurrentTasks: 2
+  quota:
+    maxTaskStarts: 100
+    windowSeconds: 86400
+  serverConfig:
+    port: 4096
+  config: |
+    {
+      "$schema": "https://opencode.ai/config.json",
+      "model": "google/gemini-3.1-pro-preview",
+      "small_model": "google/gemini-3-flash-preview",
+      "share": "disabled",
+      "autoupdate": false
+    }
+  contexts:
+    - name: agent-repo
+      description: "Agent identity, rules, and skills (repo-as-agent pattern)"
+      type: Git
+      git:
+        repository: https://github.com/stolostron/server-foundation-agent.git
+        ref: main
+        secretRef:
+          name: git-clone-credentials
+      mountPath: .
+  credentials:
+    - name: git
+      secretRef:
+        name: git-settings
+    - name: gemini
+      secretRef:
+        name: gemini-credentials
+    - name: github-app
+      secretRef:
+        name: github-bot-credentials
+    - name: github-token
+      secretRef:
+        name: github-token
+    - name: slack
+      secretRef:
+        name: slack-webhook-url
+    - name: jira-token
+      secretRef:
+        name: jira-token
