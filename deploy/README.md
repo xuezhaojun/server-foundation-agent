@@ -39,18 +39,25 @@ All resources are deployed to a single `server-foundation` namespace.
 
 ## Setup
 
-### 1. Create secrets
+### 1. Deploy secrets (one-time, per cluster)
+
+Secrets are managed separately from the kustomization to avoid requiring credentials for every deploy. Each developer applies secrets to their own cluster independently.
 
 ```bash
 cp deploy/secrets.example.yaml deploy/secrets.yaml
 # Edit secrets.yaml with actual values
+kubectl apply -f deploy/secrets.yaml -n server-foundation
 ```
 
-### 2. Deploy everything
+> **Note:** `secrets.yaml` is git-ignored. Never commit it. In the future, secrets may be managed via a more secure method (e.g., Vault, External Secrets Operator).
+
+### 2. Deploy everything else
 
 ```bash
 kubectl apply -k deploy/
 ```
+
+This deploys agents, CronJobs, RBAC, and namespace — but not secrets. Secrets must already exist in the cluster (see step 1).
 
 ## Changing Resources
 
