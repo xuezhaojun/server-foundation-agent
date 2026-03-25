@@ -79,8 +79,26 @@ The README is both a rule book and a directory. All detailed docs live under `do
 
 ## Working with Code (CRITICAL)
 
-- **`repos/` is READ-ONLY.** Submodules under `repos/` are reference copies. NEVER modify files, create branches, or commit inside `repos/`. They exist only for reading and searching.
-- **All code checkouts MUST use the [sfa-workspace-clone](.claude/skills/sfa-workspace-clone/SKILL.md) skill.** NEVER use plain `git clone` into `workspace/`. The sfa-workspace-clone skill uses bare repos + worktrees, which enables concurrent development on multiple branches of the same repo and supports automated cleanup. The `workspace/` directory is git-ignored.
+**Two modes — pick the right one:**
+
+| Intent | Where | How |
+|--------|-------|-----|
+| **Read / analyze** code (PR review, code search, dependency analysis) | `repos/` submodules | Read files directly — do NOT clone elsewhere |
+| **Read a specific version** (bug on release-2.12, historical commit) | `repos/` submodules | `git fetch` + `git checkout FETCH_HEAD`, restore after |
+| **Modify** code (create PR, fix bug, new feature) | `workspace/` worktrees | Use sfa-workspace-clone skill |
+
+- **`repos/` is for READING.** Submodules under `repos/` are reference copies. Use them directly for **all** read-only tasks: code analysis, PR diff review, dependency tracing, searching. NEVER clone a repo to `/tmp` or any other location just to read it — use `repos/` instead. NEVER modify source files, create branches, or commit inside `repos/`.
+- **Auto-init submodules on demand.** Not all submodules may be initialized locally. When a task requires reading repo source code, check if the target submodule directory exists and is non-empty. If not, initialize it with `git submodule update --init --depth 1 <submodule-path>`. For simple metadata queries (issue counts, PR lists), prefer GitHub API calls instead of cloning.
+- **Version-specific analysis in `repos/`.** Submodules are shallow (depth 1), so historical refs are not available by default. To analyze a specific branch or tag, fetch it on demand and restore afterward:
+  ```bash
+  cd repos/path/to/repo
+  original=$(git rev-parse HEAD)
+  git fetch origin release-2.12 --depth 1
+  git checkout FETCH_HEAD        # detached HEAD, safe for reading
+  # ... analyze code ...
+  git checkout $original         # restore to original commit
+  ```
+- **`workspace/` is for WRITING.** All code modifications MUST use the [sfa-workspace-clone](.claude/skills/sfa-workspace-clone/SKILL.md) skill. NEVER use plain `git clone` into `workspace/`. The sfa-workspace-clone skill uses bare repos + worktrees, which enables concurrent development on multiple branches of the same repo and supports automated cleanup. The `workspace/` directory is git-ignored.
   - **Checking out a PR:** `.claude/skills/sfa-workspace-clone/clone-worktree.sh <org/repo> <pr-number>`
   - **Starting new development:** `.claude/skills/sfa-workspace-clone/clone-worktree.sh --new <org/repo> <branch-name> [--base <base-branch>]`
 - **Always use the fork workflow for PRs.** The `--new` mode automates this: it ensures your fork exists, branches from upstream, and configures push to your fork. For PR mode, push goes to the upstream repo's branch.
