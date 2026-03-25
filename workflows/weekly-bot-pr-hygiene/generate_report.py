@@ -2,7 +2,7 @@
 """Phase 4: Generate Markdown report from diagnosis results.
 
 Usage:
-    python3 workflows/weekly-bot-pr-cleanup/generate_report.py <diagnoses_dir> <output.md>
+    python3 workflows/weekly-bot-pr-hygiene/generate_report.py <diagnoses_dir> <output.md>
 
 Input:  Directory containing pr-*.json diagnosis result files
 Output: Markdown report file
@@ -77,7 +77,7 @@ def main():
         return f"[#{d['pr_number']}]({d['url']})"
 
     md = [
-        f"# Server Foundation Weekly Bot PR Cleanup — {today}",
+        f"# Server Foundation Weekly Bot PR Hygiene — {today}",
         "",
         "## Executive Summary",
         "",

@@ -2,7 +2,7 @@
 """Phase 2b: Collect CI check results for each bot PR.
 
 Usage:
-    python3 workflows/weekly-bot-pr-cleanup/collect_checks.py <bot_prs.json> <output.json>
+    python3 workflows/weekly-bot-pr-hygiene/collect_checks.py <bot_prs.json> <output.json>
 
 Input:  Filtered bot PR JSON (output of process_bot_prs.jq)
 Output: Same JSON array with check results added per PR:

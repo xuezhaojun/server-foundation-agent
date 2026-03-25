@@ -10,7 +10,7 @@ Workflows are **user-triggered or scheduled** multi-phase processes. The user kn
 |----------|-------------|---------|
 | [daily-bug-triage](daily-bug-triage.md) | Triage all new SF Jira bugs with codebase analysis and Slack report | Daily cron / user request |
 | [daily-scrum-prep](daily-scrum-prep.md) | Generate standup summaries from Jira activity | Daily cron / user request |
-| [weekly-bot-pr-cleanup](weekly-bot-pr-cleanup.md) | Diagnose and fix failing bot PRs across SF repos | Weekly cron / user request |
+| [weekly-bot-pr-hygiene](weekly-bot-pr-hygiene.md) | Diagnose and fix failing bot PRs across SF repos | Weekly cron / user request |
 | [weekly-pr-report](weekly-pr-report.md) | Generate weekly PR activity report for the team | Weekly / user request |
 
 ## Adding a New Workflow

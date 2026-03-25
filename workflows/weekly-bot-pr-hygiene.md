@@ -1,4 +1,4 @@
-# Weekly Bot PR Cleanup Workflow
+# Weekly Bot PR Hygiene Workflow
 
 Analyze all open Red Hat Konflux bot PRs on the Server Foundation project board, diagnose CI failures using
 failure pattern matching, attempt auto-fixes via sub-agents, and generate an actionable report.
@@ -7,7 +7,7 @@ failure pattern matching, attempt auto-fixes via sub-agents, and generate an act
 
 ## Trigger Phrases
 
-- `weekly bot PR cleanup`, `relevant PR cleanup`, `konflux PR cleanup`
+- `weekly bot PR hygiene`, `relevant PR hygiene`, `konflux PR hygiene`
 - `analyze bot PRs`, `check bot PR CI status`
 
 ## Workflow Phases
@@ -24,7 +24,7 @@ sfa-github-fetch-prs skill        jq + collect_checks      sub-agents per PR    
 This workflow includes ready-to-use scripts. **Do NOT write your own processing scripts** — use the bundled ones:
 
 ```
-workflows/weekly-bot-pr-cleanup/
+workflows/weekly-bot-pr-hygiene/
 ├── process_bot_prs.jq              # Phase 2: filter raw PRs to open bot PRs
 ├── collect_checks.py               # Phase 2: collect CI check results per PR
 ├── diagnose_pr.md                  # Phase 3: sub-agent instructions template
@@ -57,7 +57,7 @@ Run the bundled scripts to filter bot PRs and collect their CI check status.
 
 ```bash
 mkdir -p .output
-jq --argjson today_sec $(date +%s) -f workflows/weekly-bot-pr-cleanup/process_bot_prs.jq <raw_prs.json> > .output/bot_prs.json
+jq --argjson today_sec $(date +%s) -f workflows/weekly-bot-pr-hygiene/process_bot_prs.jq <raw_prs.json> > .output/bot_prs.json
 ```
 
 The jq script keeps only open PRs authored by `red-hat-konflux` and produces flat fields: `.author`, `.repo`, `.short_repo`, `.title`, `.url`, `.number`, `.age_days`, `.branch`, `.is_fork`.
@@ -65,7 +65,7 @@ The jq script keeps only open PRs authored by `red-hat-konflux` and produces fla
 ### 2.2 Collect CI Check Results
 
 ```bash
-python3 workflows/weekly-bot-pr-cleanup/collect_checks.py .output/bot_prs.json .output/bot_prs_with_checks.json
+python3 workflows/weekly-bot-pr-hygiene/collect_checks.py .output/bot_prs.json .output/bot_prs_with_checks.json
 ```
 
 For each PR, runs `gh pr checks --json name,bucket,link` and augments the PR object with:
@@ -100,8 +100,8 @@ For each PR with `check_status == "has_failures"`, spawn a **sub-agent** to diag
 
 Each sub-agent:
 1. Receives the PR metadata (from Phase 2 output)
-2. Reads `workflows/weekly-bot-pr-cleanup/diagnose_pr.md` for its instructions
-3. Applies failure patterns from `workflows/weekly-bot-pr-cleanup/failure-patterns/` **in order** (FP-01 → FP-02 → FP-03 → FP-04)
+2. Reads `workflows/weekly-bot-pr-hygiene/diagnose_pr.md` for its instructions
+3. Applies failure patterns from `workflows/weekly-bot-pr-hygiene/failure-patterns/` **in order** (FP-01 → FP-02 → FP-03 → FP-04)
 4. First match wins — stops checking after a pattern matches
 5. For patterns requiring clone (FP-01, FP-03): uses the `sfa-workspace-clone` skill to check out code, attempt fix, push patch
 6. Writes result to `.output/diagnoses/pr-<NUMBER>.json`
@@ -115,7 +115,7 @@ For each PR with has_failures:
   Task(
     subagent_type: "general-purpose",
     description: "Diagnose PR <repo>#<number>",
-    prompt: "Read workflows/weekly-bot-pr-cleanup/diagnose_pr.md for instructions.
+    prompt: "Read workflows/weekly-bot-pr-hygiene/diagnose_pr.md for instructions.
              Here is the PR data: <PR_JSON>.
              Diagnose this PR and write the result to .output/diagnoses/pr-<NUMBER>.json"
   )
@@ -164,7 +164,7 @@ Each sub-agent writes a JSON file to `.output/diagnoses/pr-<NUMBER>.json`:
 After all sub-agents complete, generate the Markdown report from collected diagnosis results:
 
 ```bash
-python3 workflows/weekly-bot-pr-cleanup/generate_report.py .output/diagnoses/ .output/bot_pr_report.md
+python3 workflows/weekly-bot-pr-hygiene/generate_report.py .output/diagnoses/ .output/bot_pr_report.md
 ```
 
 The script reads all `pr-*.json` files from the diagnoses directory and produces a report with these sections:
@@ -186,17 +186,17 @@ The script reads all `pr-*.json` files from the diagnoses directory and produces
 Generate the Slack payload and send it:
 
 ```bash
-python3 workflows/weekly-bot-pr-cleanup/generate_slack_payload.py .output/diagnoses/ .output/bot_slack_payload.json
+python3 workflows/weekly-bot-pr-hygiene/generate_slack_payload.py .output/diagnoses/ .output/bot_slack_payload.json
 bash .claude/skills/sfa-slack-notify/send_to_slack.sh .output/bot_slack_payload.json
 ```
 
 **Dependencies**:
-- `workflows/weekly-bot-pr-cleanup/generate_slack_payload.py`
+- `workflows/weekly-bot-pr-hygiene/generate_slack_payload.py`
 - `.claude/skills/sfa-slack-notify/send_to_slack.sh`
 
 ### Slack Message Structure
 
-- **Header**: Robot emoji + "Bot PR Cleanup — YYYY-MM-DD"
+- **Header**: Robot emoji + "Bot PR Hygiene — YYYY-MM-DD"
 - **Summary**: Total PRs, health percentage (resolved/total), counts per category
 - **Sections**: Recommend Merge, Auto-Patched, Recommend Retest, Needs Manual (show ALL PRs, no truncation)
 - **Context footer**: Generation timestamp
@@ -212,17 +212,17 @@ Health = percentage of PRs resolved (merge + patched + retest) vs total:
 
 ## Failure Patterns
 
-Failure patterns are defined in `workflows/weekly-bot-pr-cleanup/failure-patterns/` and applied in numeric order. Each pattern has a structured format with Detection, Fix Procedure, and Verification sections.
+Failure patterns are defined in `workflows/weekly-bot-pr-hygiene/failure-patterns/` and applied in numeric order. Each pattern has a structured format with Detection, Fix Procedure, and Verification sections.
 
 | ID | Pattern | Action on Match | Requires Clone |
 |----|---------|-----------------|----------------|
-| FP-01 | [Go Version Mismatch](weekly-bot-pr-cleanup/failure-patterns/01-go-version-mismatch.md) | `patched` | Yes |
-| FP-02 | [E2E Cluster Pool Claim](weekly-bot-pr-cleanup/failure-patterns/02-e2e-cluster-pool.md) | `retest` | No |
-| FP-03 | [Locally Verifiable CI Failure](weekly-bot-pr-cleanup/failure-patterns/03-build-failure.md) | `patched` | Yes |
-| FP-04 | [SonarCloud Code Analysis](weekly-bot-pr-cleanup/failure-patterns/04-sonarcloud.md) | `patched` | Yes |
+| FP-01 | [Go Version Mismatch](weekly-bot-pr-hygiene/failure-patterns/01-go-version-mismatch.md) | `patched` | Yes |
+| FP-02 | [E2E Cluster Pool Claim](weekly-bot-pr-hygiene/failure-patterns/02-e2e-cluster-pool.md) | `retest` | No |
+| FP-03 | [Locally Verifiable CI Failure](weekly-bot-pr-hygiene/failure-patterns/03-build-failure.md) | `patched` | Yes |
+| FP-04 | [SonarCloud Code Analysis](weekly-bot-pr-hygiene/failure-patterns/04-sonarcloud.md) | `patched` | Yes |
 
 To add a new failure pattern:
-1. Create `workflows/weekly-bot-pr-cleanup/failure-patterns/NN-pattern-name.md`
+1. Create `workflows/weekly-bot-pr-hygiene/failure-patterns/NN-pattern-name.md`
 2. Follow the frontmatter format (`id`, `name`, `action_on_match`, `requires_clone`)
 3. Include Detection, Fix Procedure, and Verification sections
 4. Add the pattern to the table above and to `diagnose_pr.md`
