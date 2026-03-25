@@ -38,7 +38,7 @@ spec:
                   # Add workflow files here to run every Monday morning
                   WORKFLOWS="
                     workflows/weekly-pr-report.md
-                    workflows/weekly-bot-pr-report.md
+                    workflows/weekly-bot-pr-cleanup.md
                   "
 
                   for workflow in $WORKFLOWS; do

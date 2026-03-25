@@ -2,7 +2,7 @@
 """Phase 5: Generate Slack Block Kit payload from diagnosis results.
 
 Usage:
-    python3 workflows/weekly-bot-pr-report/generate_slack_payload.py <diagnoses_dir> <output_payload.json>
+    python3 workflows/weekly-bot-pr-cleanup/generate_slack_payload.py <diagnoses_dir> <output_payload.json>
 
 Input:  Directory containing pr-*.json diagnosis result files
 Output: Slack Block Kit JSON payload file
@@ -110,7 +110,7 @@ def main():
         health_emoji = "\u2764\ufe0f"  # red heart
 
     fallback_text = (
-        f"Server Foundation Weekly Bot PR Report \u2014 {today}: "
+        f"Server Foundation Weekly Bot PR Cleanup \u2014 {today}: "
         f"{total} bot PRs, {n_merge} ready to merge, {n_patched} auto-patched, "
         f"{n_manual} needs manual"
     )
@@ -120,7 +120,7 @@ def main():
             "type": "header",
             "text": {
                 "type": "plain_text",
-                "text": f"\U0001f916 Bot PR Report \u2014 {today}"
+                "text": f"\U0001f916 Bot PR Cleanup \u2014 {today}"
             }
         },
         {

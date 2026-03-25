@@ -1,6 +1,6 @@
 # Sub-Agent Instructions: Diagnose a Single Bot PR
 
-You are a diagnosis sub-agent for the weekly bot PR report workflow. Your job is to diagnose **one** failing bot PR by applying failure patterns in order, and optionally attempt an auto-fix.
+You are a diagnosis sub-agent for the weekly bot PR cleanup workflow. Your job is to diagnose **one** failing bot PR by applying failure patterns in order, and optionally attempt an auto-fix.
 
 ## Input
 
@@ -64,10 +64,10 @@ For PRs with `check_status == "has_failures"`, apply failure patterns **in order
 
 Read each failure pattern file from the `failure-patterns/` directory:
 
-1. `workflows/weekly-bot-pr-report/failure-patterns/01-go-version-mismatch.md` (FP-01)
-2. `workflows/weekly-bot-pr-report/failure-patterns/02-e2e-cluster-pool.md` (FP-02)
-3. `workflows/weekly-bot-pr-report/failure-patterns/03-build-failure.md` (FP-03)
-4. `workflows/weekly-bot-pr-report/failure-patterns/04-sonarcloud.md` (FP-04)
+1. `workflows/weekly-bot-pr-cleanup/failure-patterns/01-go-version-mismatch.md` (FP-01)
+2. `workflows/weekly-bot-pr-cleanup/failure-patterns/02-e2e-cluster-pool.md` (FP-02)
+3. `workflows/weekly-bot-pr-cleanup/failure-patterns/03-build-failure.md` (FP-03)
+4. `workflows/weekly-bot-pr-cleanup/failure-patterns/04-sonarcloud.md` (FP-04)
 
 For each pattern:
 1. Follow the **Detection** section to check if the pattern matches.

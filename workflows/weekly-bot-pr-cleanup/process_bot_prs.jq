@@ -1,7 +1,7 @@
 # process_bot_prs.jq — Phase 2: Filter raw PRs to open bot PRs
 #
 # Usage:
-#   jq --argjson today_sec $(date +%s) -f workflows/weekly-bot-pr-report/process_bot_prs.jq <raw_prs.json>
+#   jq --argjson today_sec $(date +%s) -f workflows/weekly-bot-pr-cleanup/process_bot_prs.jq <raw_prs.json>
 #
 # Input:  Raw JSON array from fetch-prs skill (detail level: all)
 # Output: Filtered array of open bot PRs with flat fields
