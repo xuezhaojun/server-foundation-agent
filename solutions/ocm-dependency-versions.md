@@ -1,3 +1,12 @@
+---
+title: OCM upstream dependency version survey and compatibility tiers
+symptom: "Need to determine which OCM dependency versions are compatible with a given branch"
+keywords: [OCM, addon-framework, api, sdk-go, k8s.io, controller-runtime, version, tier, compatibility, backplane, release, dependency]
+affected_versions: "All ACM/MCE versions"
+last_verified: 2026-03-19
+status: active
+---
+
 # OCM Dependency Versions Survey
 
 Updated: 2026-03-19

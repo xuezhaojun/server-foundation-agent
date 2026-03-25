@@ -1,3 +1,12 @@
+---
+title: CVE-driven dependency upgrades on older release branches
+symptom: "go build fails after upgrading a CVE-affected dependency — cascade into k8s.io and OCM deps"
+keywords: [CVE, dependency upgrade, go mod, replace directive, k8s.io, addon-framework, api, sdk-go, cel-go, helm, older branch, backplane, release, cascade, go build]
+affected_versions: "ACM 2.12+ (backplane-2.7 through current)"
+last_verified: 2026-03-19
+status: active
+---
+
 # SOP: CVE-Driven Dependency Upgrades on Older Release Branches
 
 ## Purpose
