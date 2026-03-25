@@ -1,6 +1,6 @@
 ---
 name: sfa-jira-standup
-description: "Generate a daily standup report from Jira for a Server Foundation team member. Use this skill when the user wants a standup summary, daily update, or asks 'what did I do yesterday', 'standup', 'daily update', 'my status', '站会'. Queries Jira to find recently updated and in-progress issues, then formats a standup report."
+description: "Generate a daily standup report from Jira for a Server Foundation team member. Use this skill when the user wants a standup summary, daily update, or asks 'what did I do yesterday', 'standup', 'daily update', 'my status'. Queries Jira to find recently updated and in-progress issues, then formats a standup report."
 ---
 
 # Jira Standup Report
@@ -68,5 +68,4 @@ After presenting the report, ask: "Any blockers to add?"
 /sfa-jira-standup
 What did I do yesterday?
 Standup for zhiwei
-站会
 ```

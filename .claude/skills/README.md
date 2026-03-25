@@ -19,6 +19,7 @@ Skills are task-specific workflows the agent can execute. Each skill has a step-
 | [sfa-session-log](sfa-session-log/SKILL.md) | Log session summary to updates.md (what was done, issues, limitations) | On demand |
 | [sfa-cluster-pools](sfa-cluster-pools/SKILL.md) | Manage OCP cluster pools, cluster claims, hibernation, and AWS resource cleanup | On demand |
 | [sfa-prow-config](sfa-prow-config/SKILL.md) | Prow config reference: ACM/MCE/OCP version mappings and SF repo ownership | On demand |
+| [sfa-solution-add](sfa-solution-add/SKILL.md) | Add a new solution (错题本 entry) with credential scanning and grep-friendly format | On demand |
 
 ## Adding a New Skill
 

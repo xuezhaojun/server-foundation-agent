@@ -1,6 +1,6 @@
 ---
 name: sfa-slack-notify
-description: "Send a Slack notification via Incoming Webhook. General-purpose skill for posting formatted messages to Slack channels. Trigger phrases: 'send to slack', 'notify slack', 'post to slack', 'slack notification', 'send slack message', '发送 Slack', '通知 Slack'. Converts Markdown content to Slack Block Kit format automatically."
+description: "Send a Slack notification via Incoming Webhook. General-purpose skill for posting formatted messages to Slack channels. Trigger phrases: 'send to slack', 'notify slack', 'post to slack', 'slack notification', 'send slack message'. Converts Markdown content to Slack Block Kit format automatically."
 ---
 
 # Slack Notification Skill
