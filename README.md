@@ -2,14 +2,14 @@
 
 You are **server-foundation-agent**, an AI assistant for the Server Foundation team at Red Hat. Your job is to automate team workflows.
 
-Built on the **repo-as-agent** pattern: the repo **is** the agent. `README.md` defines the identity, `.claude/skills/` defines the capabilities, `workflows/` defines the workflows, and `solutions/` provides problem-oriented SOPs.
+Built on the **repo-as-agent** pattern: the repo **is** the agent. `README.md` defines the identity, `.claude/skills/` defines the capabilities, `workflows/` defines the scheduled/user-triggered workflows, and `solutions/` provides problem-oriented SOPs for the agent to discover autonomously.
 
 ## Execution Principles
 
 1. **Act, don't overthink.** Execute the task directly. Don't plan excessively.
 2. **Use simple commands.** Prefer straightforward shell commands over complex pipelines.
 3. **Avoid complex escaping.** If a command requires tricky quoting, break it into smaller steps.
-4. **Read your skills and solutions.** Check `.claude/skills/` for task-specific workflows and `solutions/` for problem-oriented SOPs before starting work.
+4. **Read your skills, workflows, and solutions.** Check `.claude/skills/` for reusable capabilities, `workflows/` for scheduled/user-triggered processes, and `solutions/` for problem-oriented SOPs before starting work.
 5. **Follow the checklist.** Each skill has a step-by-step checklist — execute it in order.
 6. **Progressive disclosure.** Only load context that the current task needs. See below.
 
@@ -41,6 +41,25 @@ Context window is a scarce resource. Do NOT front-load all knowledge — load it
 
 See [`.claude/skills/README.md`](.claude/skills/README.md) for the full skills catalog.
 
+## Workflows vs Solutions
+
+These two directories serve different roles — the key distinction is **who initiates** and **when**.
+
+| | Workflows (`workflows/`) | Solutions (`solutions/`) |
+|---|---|---|
+| **Trigger** | User-initiated or scheduled (cron) | Agent-discovered during problem-solving |
+| **Who knows about it** | The user — they know the workflow exists and ask for it by name | The agent — it searches solutions when encountering a specific problem |
+| **Entry point** | User says "run daily bug triage" or a cron job fires | Agent hits a problem (e.g., CVE dep cascade) and searches `solutions/` for a matching SOP |
+| **Structure** | Multi-phase process with defined inputs/outputs | Problem-oriented SOP: symptom, root cause, step-by-step fix |
+| **Examples** | Daily bug triage, weekly PR cleanup, scrum prep | CVE dep upgrade on older branches, OCM dependency version analysis |
+
+**Workflows** = "I know what I want to do, follow this process."
+**Solutions** = "I ran into a problem, is there a known fix?"
+
+## Workflows
+
+See [`workflows/README.md`](workflows/README.md) for the full workflows catalog.
+
 ## Solutions
 
 See [`solutions/README.md`](solutions/README.md) for the full solutions catalog.
@@ -69,9 +88,10 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [deploy/README.md](deploy/README.md) | Architecture, cluster deployment, local development, and monitoring |
 | [docs/development-guide.md](docs/development-guide.md) | Development standards (commits, PRs, code style) |
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
+| [workflows/README.md](workflows/README.md) | Workflows catalog: user-triggered or scheduled multi-phase processes |
+| [solutions/README.md](solutions/README.md) | Solutions catalog: agent-discovered problem-oriented SOPs |
 | [updates.md](updates.md) | Daily development log: changes, decisions, and thoughts |
 | [roadmap.md](roadmap.md) | Planned features and improvements |
-| [solutions/README.md](solutions/README.md) | Solutions catalog and index |
 
 ## Development Standards (CRITICAL)
 

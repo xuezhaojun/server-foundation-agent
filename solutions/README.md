@@ -1,6 +1,10 @@
 # Solutions
 
-Solutions are problem-oriented SOPs and reference materials. Unlike skills (which are goal-driven: "complete task X"), solutions are **problem-driven**: "when you encounter problem Y, here is the fix."
+Solutions are **agent-discovered**, problem-oriented SOPs. When the agent encounters a specific problem during its work (e.g., a CVE dependency cascade on an older branch), it searches `solutions/` for a matching SOP and follows it.
+
+**Key trait:** The agent initiates the lookup. The user does not need to know which solution exists — the agent finds it by matching the problem context against solution descriptions.
+
+> Compare with [Workflows](../workflows/README.md): workflows are **user-triggered or scheduled** — the user knows the workflow and asks for it by name.
 
 | Solution | Description |
 |----------|-------------|
