@@ -1,9 +1,9 @@
 ---
-name: sfa-session-log
+name: sfa-update
 description: "Log a session summary to updates.md. Use this skill after completing a session to record what was done, issues encountered, limitations discovered, and any notes. Trigger phrases: 'log session', 'session summary', 'update log', 'record session', 'write update', 'add update', 'session log', 'log update'."
 ---
 
-# Session Log
+# Update Log
 
 Append a concise session summary to `updates.md` in the project root.
 
@@ -45,15 +45,21 @@ Skip categories with nothing to say. No headers like "What was done:" — just w
 - Discovered agent can't access Brew builds behind VPN.
 ```
 
-**If today's date heading does NOT exist** — add new section:
+**If today's date heading does NOT exist** — add new section with commit range:
 
 ```markdown
 
-## YYYY-MM-DD
+## YYYY-MM-DD (`<first-commit>...<latest-commit>`)
 
 - Fixed X in PR #42. Hit flaky CI test, retried.
 - Discovered agent can't access Brew builds behind VPN.
 ```
+
+To get the commit range, run:
+```bash
+git log --oneline --since="YYYY-MM-DDT00:00:00" --until="YYYY-MM-DDT23:59:59"
+```
+Use the oldest and newest commit short hashes from today. If no commits exist, omit the parenthetical.
 
 ### Step 4: Confirm
 
@@ -62,9 +68,9 @@ Show the added bullets to the user.
 ## Examples
 
 ```
-/sfa-session-log
-/sfa-session-log Fixed cluster-permission RBAC issue in PR #42. Hit flaky CI test.
-/sfa-session-log Discovered agent cannot access Brew builds behind VPN.
+/sfa-update
+/sfa-update Fixed cluster-permission RBAC issue in PR #42. Hit flaky CI test.
+/sfa-update Discovered agent cannot access Brew builds behind VPN.
 Log this session
 Write an update
 ```

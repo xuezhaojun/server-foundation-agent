@@ -2,11 +2,24 @@
 
 Daily development log. Each day's entry covers what changed, why, and any thoughts or discoveries along the way.
 
-Use `/sfa-session-log` to append entries after each session.
+Use `/sfa-update` to append entries after each session.
 
 **Format:** `## YYYY-MM-DD` heading, then bullet points. For significant architectural decisions, add a brief "Why / What it replaces" note (2-3 lines max) right after the bullet.
 
 ---
+
+## 2026-03-25 (`08fe928..d32af50`)
+
+- Added **sfa-cluster-pools** and **sfa-prow-config** skills (#6).
+- Added **server-mode agent** (`server-foundation-agent-live`) for cluster deployment.
+- Added **daily scrum prep workflow**.
+- Added **error-notebook framework** (`solutions/`) with 4 new solutions (cluster-proxy-websocket-403, cluster-proxy-addon-restore-failure, import-klusterlet-validation-error, clock-sync-kind-cluster-limitation).
+- Added **sfa-solution-add** skill for recording new solutions.
+- Renamed weekly-bot-pr-report → weekly-bot-pr-cleanup → weekly-bot-pr-hygiene.
+- Clarified workflows vs solutions distinction in docs.
+- Clarified repos/ (read-only) vs workspace/ (write) usage in CLAUDE.md.
+- Refined triage skill: replaced verbose Cause/Fix with short summary in Slack output.
+- Monitored flaky e2e on PR stolostron/multicloud-operators-foundation#1229 — cluster-proxy "No agent available" tunnel flake, auto-retested.
 
 ## 2026-03-24
 
@@ -27,4 +40,4 @@ Use `/sfa-session-log` to append entries after each session.
 - Agent cannot access downstream test environments — can't reproduce or verify. Need dedicated test cluster.
 - Removed GitHub Projects board and 5 related skills (`sfa-project-{create,update,search,sync,report}`). Jira is the sole project tracking tool — the board was redundant overhead.
   - What replaces it: Jira (project tracking), `updates.md` (session logs), `sfa-jira-comment` (progress updates).
-- Added `updates.md` and `sfa-session-log` skill, replacing `docs/limitations.md`.
+- Added `updates.md` and `sfa-update` skill, replacing `docs/limitations.md`.
