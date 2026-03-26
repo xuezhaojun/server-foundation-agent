@@ -76,3 +76,6 @@
 [submodule "repos/installer/stolostron/multiclusterhub-operator"]
 	path = repos/installer/stolostron/multiclusterhub-operator
 	url = https://github.com/stolostron/multiclusterhub-operator.git
+[submodule "repos/server-foundation/ocm-io/clusteradm"]
+	path = repos/server-foundation/ocm-io/clusteradm
+	url = https://github.com/open-cluster-management-io/clusteradm.git

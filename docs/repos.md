@@ -72,6 +72,7 @@ Use the helper script to manage submodules:
 | [cluster-proxy](https://github.com/open-cluster-management-io/cluster-proxy) | Cluster proxy (upstream) |
 | [managed-serviceaccount](https://github.com/open-cluster-management-io/managed-serviceaccount) | Managed ServiceAccount (upstream) |
 | [cluster-permission](https://github.com/open-cluster-management-io/cluster-permission) | Cluster permission (upstream) |
+| [clusteradm](https://github.com/open-cluster-management-io/clusteradm) | OCM CLI tool for cluster management |
 
 ## Build / CI (`repos/build/`)
 
