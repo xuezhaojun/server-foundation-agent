@@ -177,15 +177,15 @@ def build_blocks(metrics):
     # Per-Member Status (compact table)
     if per_member:
         member_text = "*Per-Member Status*\n```\n"
-        member_text += f"{'Member':<18s} {'New':>4s} {'Prog':>5s} {'Review':>6s} {'Done':>4s}\n"
-        member_text += f"{'─' * 18:<18s} {'─' * 4:>4s} {'─' * 5:>5s} {'─' * 6:>6s} {'─' * 4:>4s}\n"
+        member_text += f"{'Member':<18s} {'New':>3s} {'Back':>4s} {'Prog':>4s} {'Rev':>3s} {'Test':>4s} {'Resv':>4s} {'Clos':>4s}\n"
+        member_text += f"{'─' * 18:<18s} {'─' * 3:>3s} {'─' * 4:>4s} {'─' * 4:>4s} {'─' * 3:>3s} {'─' * 4:>4s} {'─' * 4:>4s} {'─' * 4:>4s}\n"
 
         for member, stats in per_member.items():
             # Truncate long names
             name = member[:17] if len(member) > 17 else member
             member_text += (
-                f"{name:<18s} {stats['not_started']:>4d} {stats['in_progress']:>5d} "
-                f"{stats['review']:>6d} {stats['done']:>4d}\n"
+                f"{name:<18s} {stats['new']:>3d} {stats['backlog']:>4d} {stats['in_progress']:>4d} "
+                f"{stats['review']:>3d} {stats['testing']:>4d} {stats['resolved']:>4d} {stats['closed']:>4d}\n"
             )
 
         member_text += "```"

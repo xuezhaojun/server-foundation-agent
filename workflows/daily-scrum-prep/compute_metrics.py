@@ -20,11 +20,17 @@ import sys
 import datetime
 from collections import defaultdict
 
-# Status categories
-DONE_STATUSES = {"Closed", "Resolved", "Release Pending", "ON_QA", "Verified"}
+# Status categories (match sprint board column order)
+NEW_STATUSES = {"New"}
+BACKLOG_STATUSES = {"Backlog", "Refinement"}
 IN_PROGRESS_STATUSES = {"In Progress"}
 REVIEW_STATUSES = {"Review", "Code Review"}
-NOT_STARTED_STATUSES = {"New", "Backlog", "Refinement"}
+TESTING_STATUSES = {"Testing", "ON_QA"}
+RESOLVED_STATUSES = {"Resolved", "Release Pending", "Verified"}
+CLOSED_STATUSES = {"Closed"}
+# Combined groups for existing logic
+DONE_STATUSES = RESOLVED_STATUSES | CLOSED_STATUSES
+NOT_STARTED_STATUSES = NEW_STATUSES | BACKLOG_STATUSES
 
 # Benchmarks
 COMMITMENT_RATE_TARGET = 85  # %
@@ -310,20 +316,36 @@ def compute_burndown(issues, sprint_info):
 
 def compute_per_member_breakdown(issues):
     """Compute per-member issue breakdown by status."""
-    members = defaultdict(lambda: {"total": 0, "done": 0, "in_progress": 0, "review": 0, "not_started": 0})
+    members = defaultdict(lambda: {
+        "total": 0, "new": 0, "backlog": 0, "in_progress": 0,
+        "review": 0, "testing": 0, "resolved": 0, "closed": 0,
+        # Keep combined keys for backward compatibility
+        "done": 0, "not_started": 0,
+    })
 
     for issue in issues:
         assignee = issue["assignee"]
         members[assignee]["total"] += 1
         status = issue["status"]
-        if status in DONE_STATUSES:
-            members[assignee]["done"] += 1
+        if status in NEW_STATUSES:
+            members[assignee]["new"] += 1
+            members[assignee]["not_started"] += 1
+        elif status in BACKLOG_STATUSES:
+            members[assignee]["backlog"] += 1
+            members[assignee]["not_started"] += 1
         elif status in IN_PROGRESS_STATUSES:
             members[assignee]["in_progress"] += 1
         elif status in REVIEW_STATUSES:
             members[assignee]["review"] += 1
-        elif status in NOT_STARTED_STATUSES:
-            members[assignee]["not_started"] += 1
+        elif status in TESTING_STATUSES:
+            members[assignee]["testing"] += 1
+            members[assignee]["done"] += 1
+        elif status in RESOLVED_STATUSES:
+            members[assignee]["resolved"] += 1
+            members[assignee]["done"] += 1
+        elif status in CLOSED_STATUSES:
+            members[assignee]["closed"] += 1
+            members[assignee]["done"] += 1
 
     # Sort by done count descending
     sorted_members = sorted(members.items(), key=lambda x: -x[1]["done"])
