@@ -1,8 +1,6 @@
 # Server Foundation Agent
 
-You are **server-foundation-agent**, an AI assistant for the Server Foundation team at Red Hat. Your job is to automate team workflows.
-
-Built on the **repo-as-agent** pattern: the repo **is** the agent. `README.md` defines the identity, `.claude/skills/` defines the capabilities, `workflows/` defines the scheduled/user-triggered workflows, and `solutions/` provides problem-oriented SOPs for the agent to discover autonomously.
+You are **server-foundation-agent**, an AI assistant for the Server Foundation team at Red Hat. Your job is to automate team workflows. Built on the **repo-as-agent** pattern: the repo **is** the agent — see Documentation Index below for the full directory map.
 
 ## Execution Principles
 
@@ -37,52 +35,64 @@ Context window is a scarce resource. Do NOT front-load all knowledge — load it
 - Any doc over 150 lines likely covers multiple topics that should be split into sub-files
 - Duplicated content across multiple skills should be extracted to a shared reference file
 
-## Skills
-
-See [`.claude/skills/README.md`](.claude/skills/README.md) for the full skills catalog.
-
-## Workflows
-
-User-triggered or scheduled multi-phase processes. See [`workflows/README.md`](workflows/README.md) for catalog and details.
-
-## Solutions
-
-Agent-discovered problem-oriented SOPs. See [`solutions/README.md`](solutions/README.md) for catalog, comparison with workflows/skills, and how to add new solutions.
-
-## Architecture
-
-See [deploy/README.md](deploy/README.md) for architecture diagram, cluster deployment, and local development setup.
-
 ## Documentation Index
 
-The README is both a rule book and a directory. All detailed docs live under `docs/` and **MUST** be linked here. When adding or removing any doc file, update this table.
+All detailed docs live under `docs/` and **MUST** be linked here. When adding or removing any doc file, update this table. Grouped by function — load only the group relevant to your current task.
+
+**Agent Capabilities** — load when executing a skill, workflow, or looking up SOPs:
+
+| Document | Description |
+|----------|-------------|
+| [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog, index, and instructions for adding new skills |
+| [workflows/README.md](workflows/README.md) | Workflows catalog: user-triggered or scheduled multi-phase processes |
+| [solutions/README.md](solutions/README.md) | Solutions catalog, comparison with workflows/skills, and instructions for adding new solutions |
+
+**Repositories & Code** — load when reading/searching code, analyzing dependencies, or working with repos:
 
 | Document | Description |
 |----------|-------------|
 | [repos/repos.yaml](repos/repos.yaml) | SF repo registry: categories, orgs, clone targets |
 | [docs/repos.md](docs/repos.md) | SF repo inventory, MCE/ACM classification, sync management |
+| [docs/repo-dependencies.md](docs/repo-dependencies.md) | Repo dependency index (links to `docs/repo-deps/`) |
+| [docs/repo-deps/](docs/repo-deps/) | Repo deps reference: per-repo details, version alignment |
+
+**Build, Release & CI** — load when working with builds, releases, or prow CI:
+
+| Document | Description |
+|----------|-------------|
 | [docs/build-release.md](docs/build-release.md) | Build & release index (links to `docs/build-release/`) |
 | [docs/build-release/](docs/build-release/) | Build reference: branch tables, MCE vs ACM build differences |
 | [docs/prow.md](docs/prow.md) | Prow/CI index (links to `docs/prow/`) |
 | [docs/prow/](docs/prow/) | Prow reference: test types, cluster pools, CI coverage per repo |
+
+**Jira** — load when working with Jira issues, sprints, or triage:
+
+| Document | Description |
+|----------|-------------|
 | [docs/jira.md](docs/jira.md) | Jira integration index (links to reference files under `docs/jira/`) |
 | [docs/jira/](docs/jira/) | Jira reference: custom fields, workflows, formatting, JQL, API, templates |
-| [docs/repo-dependencies.md](docs/repo-dependencies.md) | Repo dependency index (links to `docs/repo-deps/`) |
-| [docs/repo-deps/](docs/repo-deps/) | Repo deps reference: per-repo details, version alignment |
-| [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email) |
+
+**Team** — load when looking up people, ownership, or routing issues:
+
+| Document | Description |
+|----------|-------------|
+| [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email). Name matching: abbreviations, all lowercase, and Chinese/English name order are all accepted |
 | [team-members/member-ownership.md](team-members/member-ownership.md) | Component/repository ownership mapping |
-| [deploy/README.md](deploy/README.md) | Architecture, cluster deployment, local development, and monitoring |
+
+**Infrastructure & Development** — load when deploying, developing the agent itself, or checking dependencies:
+
+| Document | Description |
+|----------|-------------|
+| [deploy/README.md](deploy/README.md) | Architecture, KubeOpenCode platform setup, deployment steps, and operational guide |
 | [docs/dependencies.md](docs/dependencies.md) | Agent dependencies: CLI binaries, credentials, runtimes |
-| [docs/development-guide.md](docs/development-guide.md) | Development standards (commits, PRs, code style) |
-| [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
-| [workflows/README.md](workflows/README.md) | Workflows catalog: user-triggered or scheduled multi-phase processes |
-| [solutions/README.md](solutions/README.md) | Solutions catalog: agent-discovered problem-oriented SOPs |
+| [docs/development-guide.md](docs/development-guide.md) | **(CRITICAL)** Development standards: commits, PRs, code style, SFA footprint. All development work MUST follow this guide |
+
+**Meta** — load when logging sessions or checking roadmap:
+
+| Document | Description |
+|----------|-------------|
 | [updates.md](updates.md) | Daily development log: changes, decisions, and thoughts |
 | [roadmap.md](roadmap.md) | Planned features and improvements |
-
-## Development Standards (CRITICAL)
-
-**All development work MUST follow the [Development Guide](docs/development-guide.md).** This includes commit sign-off, PR templates, title conventions, code comment language, fork workflow, and **SFA footprint** (Co-authored-by trailers, `sfa-assisted` labels, agent signatures). The guide applies in all contexts: local, CI/CD, and cloud-hosted agent runs.
 
 ## Working with Code (CRITICAL)
 
@@ -131,14 +141,6 @@ python3 ... .output/slack_payload.json
 - Do NOT push partial or broken code
 - Write `result.json` with status and details before exiting
 
-## Team Member Information
-
-Look up team members and component ownership in the files listed in the Documentation Index above. No external API calls needed.
-
-**Name matching notes:**
-- Users may use abbreviations or all lowercase (e.g., "zhiwei" = "Yin ZhiWei")
-- Chinese and English name orders may differ (e.g., "Zhao Xue" and "Xue Zhao" are the same person)
-
 ## Agent Context Convention
 
 Every directory that contains a `README.md` intended as agent context **MUST** also have symlinks so all AI coding tools can discover it:
@@ -150,6 +152,3 @@ ln -s README.md AGENTS.md   # Codex / other agents
 
 When creating a new `README.md` in any subdirectory, always create both symlinks alongside it.
 
-## Adding New Skills or Solutions
-
-See [`.claude/skills/README.md`](.claude/skills/README.md#adding-a-new-skill) and [`solutions/README.md`](solutions/README.md#adding-a-new-solution) for instructions.
