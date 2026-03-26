@@ -1,0 +1,120 @@
+# Server Foundation Related Repositories
+#
+# All repos listed here are cloned as READ-ONLY shallow copies under repos/.
+# repos/ is git-ignored — these are local reference copies for code search and analysis.
+#
+# Categories:
+#   server-foundation  — SF-owned components (the core of what we build and maintain)
+#   deps               — Forked dependency libraries with SF-specific changes
+#   installer          — Components that install SF (not owned by SF, but tightly coupled)
+#   build              — Build/CI configuration repos
+#   docs               — Documentation repos
+#
+# When to prefer local repos/ over GitHub CLI API:
+#   - Code search across multiple files or repos (grep, ast analysis)
+#   - Reading full file contents or directory structures
+#   - Dependency tracing (go.mod, go.sum, import analysis)
+#   - Complex PR review requiring cross-file context
+#   - Any task that needs more than a single file's content
+#
+# For simple metadata queries (issue counts, PR status), prefer GitHub API.
+
+repos:
+
+  # ============================================================
+  # Server Foundation owned repos
+  # These are the repos the SF team directly develops and maintains.
+  # ============================================================
+
+  server-foundation:
+
+    # --- OCM upstream (open-cluster-management-io) ---
+    ocm-io:
+      - repo: open-cluster-management-io/ocm
+        description: OCM core (upstream)
+      - repo: open-cluster-management-io/api
+        description: OCM API definitions
+      - repo: open-cluster-management-io/sdk-go
+        description: OCM Go SDK
+      - repo: open-cluster-management-io/addon-framework
+        description: Addon development framework
+      - repo: open-cluster-management-io/cluster-proxy
+        description: Cluster proxy (upstream)
+      - repo: open-cluster-management-io/managed-serviceaccount
+        description: Managed ServiceAccount (upstream)
+      - repo: open-cluster-management-io/cluster-permission
+        description: Cluster permission (upstream)
+      - repo: open-cluster-management-io/clusteradm
+        description: OCM CLI tool for cluster management
+
+    # --- stolostron downstream ---
+    stolostron:
+      - repo: stolostron/ocm
+        description: OCM downstream
+      - repo: stolostron/managedcluster-import-controller
+        description: Manages cluster imports
+      - repo: stolostron/multicloud-operators-foundation
+        description: Foundation operators
+      - repo: stolostron/cluster-proxy
+        description: Konnectivity-based cluster proxy
+      - repo: stolostron/clusterlifecycle-state-metrics
+        description: Cluster lifecycle metrics
+      - repo: stolostron/managed-serviceaccount
+        description: Managed ServiceAccount
+      - repo: stolostron/cluster-proxy-addon
+        description: Cluster proxy addon (deprecated from backplane-2.11)
+      - repo: stolostron/klusterlet-addon-controller
+        description: Klusterlet addon controller
+      - repo: stolostron/cluster-permission
+        description: Cluster permission management (migrated to MCE in 2.17)
+      - repo: stolostron/multicluster-role-assignment
+        description: Multicluster RBAC
+
+  # ============================================================
+  # Forked dependency libraries (SF-specific changes)
+  # ============================================================
+
+  deps:
+    stolostron:
+      - repo: stolostron/apiserver-network-proxy
+        description: ANP fork, key dependency of cluster-proxy
+      - repo: stolostron/grpc-go
+        description: gRPC-Go fork, key dependency of cluster-proxy
+
+  # ============================================================
+  # Installer components (not SF-owned, but tightly coupled)
+  # ============================================================
+
+  installer:
+    stolostron:
+      - repo: stolostron/backplane-operator
+        description: Installs all MCE/Foundation components into ACM
+      - repo: stolostron/multiclusterhub-operator
+        description: Installs ACM components on top of MCE
+
+  # ============================================================
+  # Build / CI configuration
+  # ============================================================
+
+  build:
+    openshift:
+      - repo: openshift/release
+        description: OpenShift CI release configuration (prow jobs, configs)
+    stolostron:
+      - repo: stolostron/konflux-build-catalog
+        description: Konflux build catalog for stolostron
+      - repo: stolostron/acm-infra
+        description: ACM infrastructure and build tooling
+
+  # ============================================================
+  # Documentation
+  # ============================================================
+
+  docs:
+    open-cluster-management-io:
+      - repo: open-cluster-management-io/open-cluster-management-io.github.io
+        description: OCM community documentation site
+    stolostron:
+      - repo: stolostron/rhacm-docs
+        description: Red Hat ACM product documentation
+        branch: 2.16_stage

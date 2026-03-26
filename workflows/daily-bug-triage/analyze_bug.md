@@ -50,14 +50,14 @@ Use these signals (in priority order) to determine which repo(s) to search:
 
 ### Step 2: Search the Codebase
 
-Search the relevant repo under `repos/` (read-only submodules). Use Grep and Glob to find relevant code:
+Search the relevant repo under `repos/` (read-only clones). Use Grep and Glob to find relevant code:
 
 - Search for CRD names, controller names, function names mentioned in the bug
 - Look for the specific annotation, field, or behavior described in the bug
 - Find the controller reconciler or handler that manages the affected resource
 - Read the relevant code to understand the logic flow
 
-**Important**: `repos/` submodules may not be initialized. If a repo directory is empty, note this in your analysis and check if the code is available in an alternative location (e.g., `repos/server-foundation/ocm-io/` vs `repos/server-foundation/stolostron/`).
+**Important**: `repos/` clones may not be initialized. If a repo directory is empty, note this in your analysis and check if the code is available in an alternative location (e.g., `repos/server-foundation/ocm-io/` vs `repos/server-foundation/stolostron/`).
 
 ### Step 3: Root Cause Analysis
 
@@ -125,7 +125,7 @@ mkdir -p .output/bug-triage/analyses
 | `root-cause-found` | You identified the specific code causing the issue and can explain why it fails |
 | `partial-analysis` | You found relevant code and have a hypothesis, but cannot confirm the exact root cause |
 | `insufficient-info` | The bug description lacks enough detail (no repro steps, vague symptoms, missing context) |
-| `error` | You encountered a technical error during analysis (submodule not initialized, etc.) |
+| `error` | You encountered a technical error during analysis (clone not initialized, etc.) |
 
 ### Confidence Guide
 
@@ -140,13 +140,13 @@ mkdir -p .output/bug-triage/analyses
 - **Empty description**: Set `analysis_status` to `insufficient-info`, note "Bug has no description"
 - **Multiple possible repos**: Analyze the most likely one; mention alternatives in `notes`
 - **Non-code issue** (infra, config, deployment): Set `analysis_status` to `partial-analysis`, explain in `notes`
-- **Submodule not initialized**: Set `analysis_status` to `error`, note "Repository submodule not initialized under repos/"
+- **Submodule not initialized**: Set `analysis_status` to `error`, note "Repository clone not initialized under repos/"
 - **Cannot determine relevant repo**: Set `analysis_status` to `insufficient-info`, explain what signals were missing
 
 ## Important Notes
 
 - This is **read-only analysis** — do NOT modify any code, create branches, or push changes
-- Only search under `repos/` — these are read-only submodules
+- Only search under `repos/` — these are read-only clones
 - Write the result JSON even if analysis fails — the main workflow needs it
 - Keep `root_cause` and `suggested_fix` concise (2-3 sentences max)
 - Include file paths with line numbers where possible (e.g., `pkg/foo/bar.go:42`)

@@ -1,6 +1,6 @@
 # Server Foundation Related Repositories
 
-All Server Foundation owned repositories are added as **read-only** git submodules under `repos/`.
+All Server Foundation related repositories are cloned as **read-only** shallow copies under `repos/`, organized by category. The repo registry is defined in [repos.yaml](../repos/repos.yaml).
 
 For active branch and version mapping information, see [releases.md](releases.md).
 
@@ -13,17 +13,22 @@ Server Foundation components ship in two products:
 - **MCE** (Multicluster Engine) — repos use `backplane-*` branches
 - **ACM** (Advanced Cluster Management) — repos use `release-*` branches. MCE is a subset of ACM.
 
-## Submodule Management
+## Repo Sync
 
-Use the helper script to manage submodules:
+Use the helper script to manage local clones:
 
 ```bash
-# First-time init (shallow clone, depth 1)
-./scripts/sync-repos.sh
+# Clone all repos (shallow, depth 1)
+./repos/sync-repos.sh
 
-# Update all submodules to latest remote commits
-./scripts/sync-repos.sh --update
+# Update all repos to latest remote commits
+./repos/sync-repos.sh --update
+
+# Show status of all repos
+./repos/sync-repos.sh --status
 ```
+
+The script reads [repos.yaml](../repos/repos.yaml) and clones repos into the matching directory structure under `repos/`. Adding a new repo is as simple as adding an entry to `repos.yaml` and re-running the sync.
 
 ## stolostron (`repos/server-foundation/stolostron/`)
 

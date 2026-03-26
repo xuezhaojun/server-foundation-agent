@@ -149,7 +149,7 @@ Each sub-agent:
 1. Receives a single bug object (from Phase 1)
 2. Reads `workflows/daily-bug-triage/analyze_bug.md` for its instructions
 3. Identifies the relevant repository based on bug summary, description, and components
-4. Searches `repos/` (read-only submodules) for relevant code
+4. Searches `repos/` (read-only clones) for relevant code
 5. Analyzes the root cause based on code and bug description
 6. Writes result to `.output/bug-triage/analyses/bug-<KEY>.json`
 
@@ -448,12 +448,12 @@ The sub-agent maps bugs to repos using these signals (in priority order):
 - **Bug with empty description**: Mark as `insufficient-info` with note "No description provided"
 - **Bug referencing multiple repos**: Analyze the most likely repo based on keyword density; mention others in `notes`
 - **Bug about infrastructure/CI (not code)**: Mark as `partial-analysis` with note about non-code issue
-- **Repos not in submodules**: If the relevant repo is not under `repos/`, note this limitation
+- **Repos not in clones**: If the relevant repo is not under `repos/`, note this limitation
 - **Analysis timeout**: If a sub-agent takes too long, it should write a partial result and exit
 
 ## Performance Notes
 
 - Phase 1 makes one Jira API call — very fast
 - Phase 2 sub-agents run in parallel (up to 3-5 concurrent)
-- Sub-agents only read code from `repos/` (local submodules) — no git clone needed
+- Sub-agents only read code from `repos/` (local clones) — no git clone needed
 - Total workflow should complete within 10-15 minutes for typical bug counts (1-10 bugs)

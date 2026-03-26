@@ -74,7 +74,8 @@ The README is both a rule book and a directory. All detailed docs live under `do
 
 | Document | Description |
 |----------|-------------|
-| [docs/repos.md](docs/repos.md) | SF repo inventory, MCE/ACM classification, submodule management |
+| [repos/repos.yaml](repos/repos.yaml) | SF repo registry: categories, orgs, clone targets |
+| [docs/repos.md](docs/repos.md) | SF repo inventory, MCE/ACM classification, sync management |
 | [docs/build-release.md](docs/build-release.md) | Build & release index (links to `docs/build-release/`) |
 | [docs/build-release/](docs/build-release/) | Build reference: branch tables, MCE vs ACM build differences |
 | [docs/prow.md](docs/prow.md) | Prow/CI index (links to `docs/prow/`) |
@@ -104,13 +105,14 @@ The README is both a rule book and a directory. All detailed docs live under `do
 
 | Intent | Where | How |
 |--------|-------|-----|
-| **Read / analyze** code (PR review, code search, dependency analysis) | `repos/` submodules | Read files directly — do NOT clone elsewhere |
-| **Read a specific version** (bug on release-2.12, historical commit) | `repos/` submodules | `git fetch` + `git checkout FETCH_HEAD`, restore after |
+| **Read / analyze** code (PR review, code search, dependency analysis) | `repos/` clones | Read files directly — do NOT clone elsewhere |
+| **Read a specific version** (bug on release-2.12, historical commit) | `repos/` clones | `git fetch` + `git checkout FETCH_HEAD`, restore after |
 | **Modify** code (create PR, fix bug, new feature) | `workspace/` worktrees | Use sfa-workspace-clone skill |
 
-- **`repos/` is for READING.** Submodules under `repos/` are reference copies. Use them directly for **all** read-only tasks: code analysis, PR diff review, dependency tracing, searching. NEVER clone a repo to `/tmp` or any other location just to read it — use `repos/` instead. NEVER modify source files, create branches, or commit inside `repos/`.
-- **Auto-init submodules on demand.** Not all submodules may be initialized locally. When a task requires reading repo source code, check if the target submodule directory exists and is non-empty. If not, initialize it with `git submodule update --init --depth 1 <submodule-path>`. For simple metadata queries (issue counts, PR lists), prefer GitHub API calls instead of cloning.
-- **Version-specific analysis in `repos/`.** Submodules are shallow (depth 1), so historical refs are not available by default. To analyze a specific branch or tag, fetch it on demand and restore afterward:
+- **`repos/` is for READING.** Shallow clones under `repos/` are read-only reference copies, organized by category (see [repos.yaml](repos/repos.yaml)). Use them directly for **all** read-only tasks: code analysis, PR diff review, dependency tracing, searching. NEVER clone a repo to `/tmp` or any other location just to read it — use `repos/` instead. NEVER modify source files, create branches, or commit inside `repos/`.
+- **Auto-clone on demand.** Not all repos may be cloned locally. When a task requires reading repo source code, check if the target repo directory exists. If not, run `./repos/sync-repos.sh` to clone all repos, or manually clone the specific one. For simple metadata queries (issue counts, PR status), prefer GitHub API calls instead.
+- **Prefer local repos/ for complex tasks.** When a task involves cross-file analysis, dependency tracing, code search across multiple repos, or detailed PR review requiring full file context — always use local `repos/` clones rather than GitHub CLI API. The GitHub API is better suited for simple metadata queries (PR status, issue counts, labels). For anything that needs code comprehension, local clones give better results.
+- **Version-specific analysis in `repos/`.** Repos are shallow clones (depth 1), so historical refs are not available by default. To analyze a specific branch or tag, fetch it on demand and restore afterward:
   ```bash
   cd repos/path/to/repo
   original=$(git rev-parse HEAD)

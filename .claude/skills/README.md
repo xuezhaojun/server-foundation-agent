@@ -7,7 +7,7 @@ Skills are task-specific workflows the agent can execute. Each skill has a step-
 | [sfa-github-fetch-prs](sfa-github-fetch-prs/SKILL.md) | Fetch all active PRs for the Server Foundation team | On demand |
 | [sfa-workspace-clone](sfa-workspace-clone/SKILL.md) | Clone a repo and create a worktree for a PR or new branch (MUST use for all workspace checkouts) | On demand |
 | [sfa-workspace-cleanup](sfa-workspace-cleanup/SKILL.md) | Remove workspace worktrees/clones whose PRs are merged/closed | On demand |
-| [sfa-repo-sync](sfa-repo-sync/SKILL.md) | Initialize or update all submodules under repos/ to latest | On demand |
+| [sfa-repo-sync](sfa-repo-sync/SKILL.md) | Clone or update all repos under repos/ from repos.yaml | On demand |
 | [install-acm](install-acm/SKILL.md) | Install ACM/MCE on an OpenShift cluster (for testing and bug reproduction) | On demand |
 | [uninstall-acm](uninstall-acm/SKILL.md) | Uninstall ACM from an OpenShift cluster (cleanup after testing) | On demand |
 | [sfa-slack-notify](sfa-slack-notify/SKILL.md) | Send formatted notifications to Slack | On demand |
