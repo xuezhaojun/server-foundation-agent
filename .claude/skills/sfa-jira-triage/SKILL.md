@@ -25,16 +25,18 @@ Generate a triage report for SF bugs and vulnerabilities.
 
 ### Step 1: Query new/open bugs
 
+> **Exclusion**: Konflux auto-created bugs (labels: `konflux`, `auto-created`) are handled by a separate system and MUST be excluded from triage.
+
 **Query — New bugs in last N days:**
 
 ```
-project = ACM AND component = "Server Foundation" AND issuetype IN (Bug, Vulnerability) AND created >= -<days>d ORDER BY priority ASC, created DESC
+project = ACM AND component = "Server Foundation" AND issuetype IN (Bug, Vulnerability) AND created >= -<days>d AND NOT (labels = "konflux" AND labels = "auto-created") ORDER BY priority ASC, created DESC
 ```
 
 **Query — All unresolved bugs (if team overview needed):**
 
 ```
-project = ACM AND component = "Server Foundation" AND issuetype IN (Bug, Vulnerability) AND status NOT IN (Resolved, Closed) ORDER BY priority ASC, cf[10840] ASC
+project = ACM AND component = "Server Foundation" AND issuetype IN (Bug, Vulnerability) AND status NOT IN (Resolved, Closed) AND NOT (labels = "konflux" AND labels = "auto-created") ORDER BY priority ASC, cf[10840] ASC
 ```
 
 Request fields: `["issuetype", "summary", "status", "priority", "assignee", "customfield_10840", "created", "updated"]`.
