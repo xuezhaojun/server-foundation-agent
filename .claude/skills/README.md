@@ -25,11 +25,6 @@ Skills are task-specific workflows the agent can execute. Each skill has a step-
 | [sfa-solution-add](sfa-solution-add/SKILL.md) | Add a new solution (错题本 entry) with credential scanning and grep-friendly format | On demand |
 | [sfa-bug-analyze](sfa-bug-analyze/SKILL.md) | Analyze Jira bug for SF relevance and reproducibility scoring | On demand |
 | [sfa-bug-reproduce](sfa-bug-reproduce/SKILL.md) | Orchestrate full bug reproduction: provision cluster, test, post results | On demand |
-| [sfa-project-create](sfa-project-create/SKILL.md) | Create tasks (draft issues) or add Issues/PRs to the GitHub Projects board | On demand |
-| [sfa-project-update](sfa-project-update/SKILL.md) | Update task status, priority, size, dates on the Projects board | On demand |
-| [sfa-project-search](sfa-project-search/SKILL.md) | List/filter/query items on the Projects board | On demand |
-| [sfa-project-sync](sfa-project-sync/SKILL.md) | Sync Jira issues to the GitHub Projects board | On demand |
-| [sfa-project-report](sfa-project-report/SKILL.md) | Generate progress reports from board data, optionally send to Slack | On demand |
 
 ## Adding a New Skill
 

@@ -41,28 +41,13 @@ Context window is a scarce resource. Do NOT front-load all knowledge — load it
 
 See [`.claude/skills/README.md`](.claude/skills/README.md) for the full skills catalog.
 
-## Workflows vs Solutions
-
-These two directories serve different roles — the key distinction is **who initiates** and **when**.
-
-| | Workflows (`workflows/`) | Solutions (`solutions/`) |
-|---|---|---|
-| **Trigger** | User-initiated or scheduled (cron) | Agent-discovered during problem-solving |
-| **Who knows about it** | The user — they know the workflow exists and ask for it by name | The agent — it searches solutions when encountering a specific problem |
-| **Entry point** | User says "run daily bug triage" or a cron job fires | Agent hits a problem (e.g., CVE dep cascade) and searches `solutions/` for a matching SOP |
-| **Structure** | Multi-phase process with defined inputs/outputs | Problem-oriented SOP: symptom, root cause, step-by-step fix |
-| **Examples** | Daily bug triage, weekly PR cleanup, scrum prep | CVE dep upgrade on older branches, OCM dependency version analysis |
-
-**Workflows** = "I know what I want to do, follow this process."
-**Solutions** = "I ran into a problem, is there a known fix?"
-
 ## Workflows
 
-See [`workflows/README.md`](workflows/README.md) for the full workflows catalog.
+User-triggered or scheduled multi-phase processes. See [`workflows/README.md`](workflows/README.md) for catalog and details.
 
 ## Solutions
 
-See [`solutions/README.md`](solutions/README.md) for the full solutions catalog.
+Agent-discovered problem-oriented SOPs. See [`solutions/README.md`](solutions/README.md) for catalog, comparison with workflows/skills, and how to add new solutions.
 
 ## Architecture
 
@@ -124,35 +109,7 @@ The README is both a rule book and a directory. All detailed docs live under `do
 - **`workspace/` is for WRITING.** All code modifications MUST use the [sfa-workspace-clone](.claude/skills/sfa-workspace-clone/SKILL.md) skill. NEVER use plain `git clone` into `workspace/`. The sfa-workspace-clone skill uses bare repos + worktrees, which enables concurrent development on multiple branches of the same repo and supports automated cleanup. The `workspace/` directory is git-ignored.
   - **Checking out a PR:** `.claude/skills/sfa-workspace-clone/clone-worktree.sh <org/repo> <pr-number>`
   - **Starting new development:** `.claude/skills/sfa-workspace-clone/clone-worktree.sh --new <org/repo> <branch-name> [--base <base-branch>]`
-- **Always use the fork workflow for PRs.** The `--new` mode automates this: it ensures your fork exists, branches from upstream, and configures push to your fork. For PR mode, push goes to the upstream repo's branch.
-
-```bash
-# Correct workflow:
-# 1. gh repo fork <upstream> --clone=false    (ensure fork exists)
-# 2. Clone YOUR fork into workspace/
-# 3. Add upstream as remote
-# 4. Create branch FROM UPSTREAM's target branch (not fork's main)
-# 5. Make changes, commit, push to fork
-# 6. gh pr create against upstream
-
-# WRONG: cloning upstream directly and pushing branches to it
-# WRONG: editing files directly in repos/
-# WRONG: creating branch from fork's main (it may have diverged from upstream)
-```
-
-- **Branch from the correct upstream.** SF repos exist in two GitHub orgs: `open-cluster-management-io` (OCM community) and `stolostron` (Red Hat downstream). Their `main` branches **diverge** — stolostron repos contain extra files (`.tekton/`, `Dockerfile.rhtap`, etc.) that don't exist in OCM-IO. When creating a PR, always checkout the feature branch from the **target repo's branch** (e.g., `git checkout -b feature upstream/main`), NOT from the fork's `main`. Otherwise the PR diff will include unrelated commits from the diverged fork.
-- **Choose the correct target org by task type.** Feature PRs (new APIs, new controller logic) target **`open-cluster-management-io`** (OCM). Maintenance PRs (dependency upgrades, CI fixes) and backport PRs target **`stolostron`**. When the target is ambiguous, ask the user before proceeding. See the [Development Guide](docs/development-guide.md#pr-target-ocm-vs-stolostron) for the full decision table.
-
-```bash
-# Example: PR targeting open-cluster-management-io/cluster-permission
-git clone https://github.com/<your-fork>/cluster-permission.git
-cd cluster-permission
-git remote add upstream https://github.com/open-cluster-management-io/cluster-permission.git
-git fetch upstream main
-git checkout -b my-feature upstream/main   # Branch from UPSTREAM, not origin/main
-# ... make changes, commit, push to origin ...
-gh pr create --repo open-cluster-management-io/cluster-permission --head <user>:my-feature
-```
+- **Always use the fork workflow for PRs.** The `--new` mode automates this: it ensures your fork exists, branches from upstream, and configures push to your fork. For PR mode, push goes to the upstream repo's branch. See the [Development Guide](docs/development-guide.md#fork-workflow) for the full fork workflow and PR targeting rules (OCM vs stolostron).
 
 ## Intermediate Artifacts
 
