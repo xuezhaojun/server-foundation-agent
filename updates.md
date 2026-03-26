@@ -8,7 +8,12 @@ Use `/sfa-update` to append entries after each session.
 
 ---
 
-## 2026-03-26 (`cf83647...8391383`)
+## 2026-03-26 (`cf83647...200c538`)
+
+- **Migrated repos/ from git submodules to YAML-driven shallow clones.**
+  *Design principle: "less structure, more intelligence."* Previously, repos were linked via git submodules — a hard structural coupling that caused maintenance friction (noisy git status, submodule pointer commits, complex add/remove workflows). Now repos are described in `repos/repos.yaml` and cloned by `repos/sync-repos.sh`. The agent reads the YAML to understand repo taxonomy (categories, orgs, descriptions) instead of relying on git's submodule machinery. Adding a new repo is just one YAML entry instead of `git submodule add` + commit. This also consolidates all repos-related files (`repos.yaml`, `sync-repos.sh`) into the `repos/` directory itself.
+
+## 2026-03-26 (`cf83647...8391383`) (earlier session)
 
 - Added `docs/dependencies.md` — full agent dependency inventory: CLI binaries, credentials, runtimes, per-skill KUBECONFIG targets.
 - Added `sfa-cve-analysis` skill (#9), `sfa-bug-analyze` + `sfa-bug-reproduce` + `install-acm` + `uninstall-acm` skills (#7).
