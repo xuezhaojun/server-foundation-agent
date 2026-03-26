@@ -177,15 +177,15 @@ def build_blocks(metrics):
     # Per-Member Status (compact table)
     if per_member:
         member_text = "*Per-Member Status*\n```\n"
-        member_text += f"{'Member':<18s} {'Done':>4s} {'Prog':>5s} {'Review':>6s} {'New':>4s}\n"
+        member_text += f"{'Member':<18s} {'New':>4s} {'Prog':>5s} {'Review':>6s} {'Done':>4s}\n"
         member_text += f"{'─' * 18:<18s} {'─' * 4:>4s} {'─' * 5:>5s} {'─' * 6:>6s} {'─' * 4:>4s}\n"
 
         for member, stats in per_member.items():
             # Truncate long names
             name = member[:17] if len(member) > 17 else member
             member_text += (
-                f"{name:<18s} {stats['done']:>4d} {stats['in_progress']:>5d} "
-                f"{stats['review']:>6d} {stats['not_started']:>4d}\n"
+                f"{name:<18s} {stats['not_started']:>4d} {stats['in_progress']:>5d} "
+                f"{stats['review']:>6d} {stats['done']:>4d}\n"
             )
 
         member_text += "```"
