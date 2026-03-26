@@ -86,6 +86,7 @@ The README is both a rule book and a directory. All detailed docs live under `do
 | [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email) |
 | [team-members/member-ownership.md](team-members/member-ownership.md) | Component/repository ownership mapping |
 | [deploy/README.md](deploy/README.md) | Architecture, cluster deployment, local development, and monitoring |
+| [docs/dependencies.md](docs/dependencies.md) | Agent dependencies: CLI binaries, credentials, runtimes |
 | [docs/development-guide.md](docs/development-guide.md) | Development standards (commits, PRs, code style) |
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog and index |
 | [workflows/README.md](workflows/README.md) | Workflows catalog: user-triggered or scheduled multi-phase processes |
