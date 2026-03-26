@@ -73,14 +73,16 @@ All Python scripts use standard library only. Modules: `json`, `sys`, `os`, `dat
 
 ### Kubernetes / OpenShift (4 skills)
 
-| Variable | Description | Used By |
-|----------|-------------|---------|
-| `KUBECONFIG` | Path to kubeconfig file | install-acm, uninstall-acm, bug-reproduce, cluster-pools |
+Different skills connect to **different clusters** — there is no single shared KUBECONFIG.
 
-**Special paths**:
-- `/tmp/kube/collective.kubeconfig` — Required by `sfa-cluster-pools` for collective cluster access.
+| Skill | Target Cluster | KUBECONFIG Source | Notes |
+|-------|---------------|-------------------|-------|
+| **sfa-cluster-pools** | Collective cluster (`api.collective.aws.red-chesterfield.com:6443`) | Fixed path: `/tmp/kube/collective.kubeconfig` | Manages cluster pools and claims; login via `oc login --web` with GitHub OIDC |
+| **install-acm** | User-specified OCP cluster | `--kubeconfig PATH` flag or `$KUBECONFIG` | Each invocation may target a different cluster |
+| **uninstall-acm** | User-specified OCP cluster | `--kubeconfig PATH` flag or `$KUBECONFIG` | Same target as install-acm |
+| **sfa-bug-reproduce** | User-specified test cluster | `$KUBECONFIG` or current context | Ephemeral cluster for bug reproduction |
 
-**Access required**: `cluster-admin` role on target cluster.
+**Access required**: `cluster-admin` role on whichever cluster is targeted.
 
 ### Quay.io (1 skill)
 
@@ -92,11 +94,11 @@ All Python scripts use standard library only. Modules: `json`, `sys`, `os`, `dat
 
 | Skill | CLI | Credentials | Runtime |
 |-------|-----|-------------|---------|
-| install-acm | oc, kubectl, jq, curl | KUBECONFIG, pull-secret | bash |
-| uninstall-acm | oc, kubectl, jq | KUBECONFIG | bash |
+| install-acm | oc, kubectl, jq, curl | KUBECONFIG (user-specified target cluster), pull-secret | bash |
+| uninstall-acm | oc, kubectl, jq | KUBECONFIG (user-specified target cluster) | bash |
 | sfa-bug-analyze | curl, jq | JIRA_EMAIL, JIRA_API_TOKEN | bash, python3 |
-| sfa-bug-reproduce | curl, jq, oc, kubectl | JIRA_EMAIL, JIRA_API_TOKEN, KUBECONFIG | bash, python3 |
-| sfa-cluster-pools | oc, kubectl, jq, aws, hiveutil | KUBECONFIG, AWS_* | bash |
+| sfa-bug-reproduce | curl, jq, oc, kubectl | JIRA_EMAIL, JIRA_API_TOKEN, KUBECONFIG (user-specified test cluster) | bash, python3 |
+| sfa-cluster-pools | oc, kubectl, jq, aws, hiveutil | `/tmp/kube/collective.kubeconfig` (collective cluster), AWS_* | bash |
 | sfa-cve-analysis | curl, jq, git | JIRA_EMAIL, JIRA_API_TOKEN | bash, python3 |
 | sfa-github-fetch-prs | gh, jq | GITHUB_TOKEN | bash |
 | sfa-jira-comment | curl, jq | JIRA_EMAIL, JIRA_API_TOKEN | bash |
