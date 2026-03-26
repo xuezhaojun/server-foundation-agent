@@ -8,6 +8,16 @@ Use `/sfa-update` to append entries after each session.
 
 ---
 
+## 2026-03-26 (`cf83647...8391383`)
+
+- Added `docs/dependencies.md` — full agent dependency inventory: CLI binaries, credentials, runtimes, per-skill KUBECONFIG targets.
+- Added `sfa-cve-analysis` skill (#9), `sfa-bug-analyze` + `sfa-bug-reproduce` + `install-acm` + `uninstall-acm` skills (#7).
+- Added `sfa-jira-inbox` skill (#8).
+- Fixed daily-scrum: deterministic changelog fetch, sprint board column alignment, AI-driven sprint insights.
+- Fixed jira-triage: exclude Konflux auto-created bugs.
+- Added `clusteradm` submodule from open-cluster-management-io.
+- Clarified per-skill KUBECONFIG targets: cluster-pools uses fixed collective cluster, install/uninstall/bug-reproduce use user-specified clusters.
+
 ## 2026-03-25 (`08fe928..d32af50`)
 
 - Added **sfa-cluster-pools** and **sfa-prow-config** skills (#6).
