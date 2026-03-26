@@ -57,27 +57,17 @@ From the sprint field (`customfield_10020`), extract:
 
 ### 1.3 Fetch Changelogs for In-Progress and Done Issues
 
-For cycle time and scope change detection, fetch changelogs for issues that have been worked on (status != New/Backlog):
+For cycle time and scope change detection, fetch changelogs for issues that have been worked on (status != New/Backlog).
+
+Run the bundled script — it fetches changelogs from Jira API and writes per-issue JSON files:
 
 ```bash
-# For each issue key that is not in New/Backlog status:
-curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
-  "https://redhat.atlassian.net/rest/api/2/issue/<KEY>?expand=changelog&fields=status" \
-  | jq '{
-    key: .key,
-    status: .fields.status.name,
-    status_transitions: [.changelog.histories[] | {
-      created: .created,
-      items: [.items[] | select(.field == "status") | {from: .fromString, to: .toString}]
-    } | select(.items | length > 0)],
-    sprint_changes: [.changelog.histories[] | {
-      created: .created,
-      items: [.items[] | select(.field == "Sprint") | {from: .fromString, to: .toString}]
-    } | select(.items | length > 0)]
-  }'
+python3 workflows/daily-scrum-prep/fetch_changelogs.py \
+  .output/scrum-prep/sprint_issues_raw.json \
+  .output/scrum-prep/changelogs/
 ```
 
-**Performance note**: Changelogs require per-issue API calls. To stay within rate limits, batch up to 10 concurrent requests using `xargs -P10` or sequential calls with no delay (Jira Cloud allows ~10 req/s).
+The script automatically filters to non-New/Backlog issues, handles rate limiting with retries, and extracts `status_transitions` and `sprint_changes` from each issue's changelog. If Jira credentials are missing, it exits cleanly with a warning.
 
 ### 1.4 Early Exit
 
@@ -283,6 +273,7 @@ bash .claude/skills/sfa-slack-notify/send_to_slack.sh .output/scrum-prep/slack_p
 ```
 
 **Dependencies**:
+- `workflows/daily-scrum-prep/fetch_changelogs.py`
 - `workflows/daily-scrum-prep/compute_metrics.py`
 - `workflows/daily-scrum-prep/generate_slack_payload.py`
 - `.claude/skills/sfa-slack-notify/send_to_slack.sh`
