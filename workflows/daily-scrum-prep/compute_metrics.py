@@ -368,6 +368,100 @@ def compute_type_distribution(issues):
     return dict(sorted(counts.items(), key=lambda x: -x[1]))
 
 
+def compute_agent_context(issues, changelogs, sprint_info, burndown, review_bottleneck):
+    """Build rich issue context for agent analysis.
+
+    Organizes issue data per-member with details the agent needs to generate
+    intelligent insights: summaries, priorities, days in current status, and
+    status transitions.
+    """
+    today = datetime.date.today()
+
+    # Compute days in current status for each issue
+    issue_details = []
+    for issue in issues:
+        key = issue["key"]
+        cl = changelogs.get(key, {})
+        transitions = cl.get("status_transitions", [])
+
+        # Find when issue entered current status
+        entered_current = None
+        for t in transitions:
+            for item in t.get("items", []):
+                if item.get("to") == issue["status"]:
+                    entered_current = parse_date(t.get("created", ""))
+
+        days_in_status = 0
+        if entered_current:
+            days_in_status = (today - entered_current).days
+        elif issue["created"]:
+            # Never transitioned — use creation date
+            created = parse_date(issue["created"])
+            if created:
+                days_in_status = (today - created).days
+
+        # Count how many status transitions this issue has had
+        transition_count = sum(len(t.get("items", [])) for t in transitions)
+
+        issue_details.append({
+            "key": key,
+            "summary": issue["summary"],
+            "type": issue["type"],
+            "status": issue["status"],
+            "priority": issue["priority"],
+            "assignee": issue["assignee"],
+            "days_in_status": days_in_status,
+            "transition_count": transition_count,
+        })
+
+    # Group by assignee for per-member analysis
+    per_member_issues = defaultdict(list)
+    for d in issue_details:
+        per_member_issues[d["assignee"]].append(d)
+
+    # Identify risk signals for the agent
+    risks = []
+    # High-priority items not started
+    for d in issue_details:
+        if d["priority"] in ("Critical", "Blocker") and d["status"] in NOT_STARTED_STATUSES:
+            risks.append({
+                "type": "high_priority_not_started",
+                "issue": d["key"],
+                "summary": d["summary"],
+                "priority": d["priority"],
+                "assignee": d["assignee"],
+                "days_in_status": d["days_in_status"],
+            })
+    # Items stuck (long time in same status, not done)
+    for d in issue_details:
+        if d["status"] not in DONE_STATUSES and d["days_in_status"] > 5:
+            risks.append({
+                "type": "potentially_stuck",
+                "issue": d["key"],
+                "summary": d["summary"],
+                "status": d["status"],
+                "assignee": d["assignee"],
+                "days_in_status": d["days_in_status"],
+            })
+    # Items bouncing (many transitions may indicate unclear requirements)
+    for d in issue_details:
+        if d["transition_count"] > 4:
+            risks.append({
+                "type": "excessive_transitions",
+                "issue": d["key"],
+                "summary": d["summary"],
+                "assignee": d["assignee"],
+                "transition_count": d["transition_count"],
+            })
+
+    return {
+        "per_member_issues": {m: sorted(issues, key=lambda x: x["days_in_status"], reverse=True)
+                              for m, issues in per_member_issues.items()},
+        "risks": risks,
+        "all_issues": issue_details,
+    }
+
+
 def generate_recommendations(burndown, scope_change, cycle_time, review_bottleneck, wip, issues):
     """Generate coaching recommendations based on metrics."""
     recs = []
@@ -498,9 +592,14 @@ def main():
     status_dist = compute_status_distribution(issues)
     type_dist = compute_type_distribution(issues)
 
-    # Generate recommendations
+    # Generate rule-based recommendations
     recommendations = generate_recommendations(
         burndown, scope_change, cycle_time, review_bottleneck, wip, issues
+    )
+
+    # Generate agent context for AI analysis
+    agent_context = compute_agent_context(
+        issues, changelogs, sprint_info, burndown, review_bottleneck
     )
 
     metrics = {
@@ -532,10 +631,16 @@ def main():
         "type_distribution": type_dist,
         "per_member": per_member,
         "recommendations": recommendations,
+        "agent_context": agent_context,
     }
 
     with open(output_file, "w") as f:
         json.dump(metrics, f, indent=2, ensure_ascii=False, default=str)
+
+    # Write agent context separately for easy reading
+    context_file = output_file.replace("metrics.json", "agent_context.json")
+    with open(context_file, "w") as f:
+        json.dump(agent_context, f, indent=2, ensure_ascii=False, default=str)
 
     # Print summary to stderr
     print(f"Sprint: {sprint_info['name'] if sprint_info else 'unknown'}", file=sys.stderr)
