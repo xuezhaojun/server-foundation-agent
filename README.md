@@ -119,7 +119,10 @@ All detailed docs live under `docs/` and **MUST** be linked here. When adding or
 - **`workspace/` is for WRITING.** All code modifications MUST use the [sfa-workspace-clone](.claude/skills/sfa-workspace-clone/SKILL.md) skill. NEVER use plain `git clone` into `workspace/`. The sfa-workspace-clone skill uses bare repos + worktrees, which enables concurrent development on multiple branches of the same repo and supports automated cleanup. The `workspace/` directory is git-ignored.
   - **Checking out a PR:** `.claude/skills/sfa-workspace-clone/clone-worktree.sh <org/repo> <pr-number>`
   - **Starting new development:** `.claude/skills/sfa-workspace-clone/clone-worktree.sh --new <org/repo> <branch-name> [--base <base-branch>]`
-- **Always use the fork workflow for PRs.** The `--new` mode automates this: it ensures your fork exists, branches from upstream, and configures push to your fork. For PR mode, push goes to the upstream repo's branch. See the [Development Guide](docs/development-guide.md#fork-workflow) for the full fork workflow and PR targeting rules (OCM vs stolostron).
+- **Push workflow is environment-aware.** The `--new` mode auto-detects the execution environment:
+  - **Autonomous mode** (`GH_APP_ID` + `GH_APP_INSTALLATION_ID` set): pushes directly to upstream with `sfa/` branch prefix. No fork needed.
+  - **Local mode** (default): uses fork workflow — pushes to your fork, creates PR from fork to upstream.
+  See the [Development Guide](docs/development-guide.md#push-workflow) for details and PR targeting rules (OCM vs stolostron).
 
 ## Intermediate Artifacts
 

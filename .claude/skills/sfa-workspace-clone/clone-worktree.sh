@@ -24,6 +24,13 @@
 # Exit on undefined variables
 set -u
 
+# Detect execution mode: autonomous (self-running on a remote machine) vs local (human-collaborative).
+# When GH_APP_ID and GH_APP_INSTALLATION_ID are set, the agent runs autonomously
+# and pushes directly to upstream repos with sfa/ branch prefix instead of forking.
+is_autonomous_mode() {
+    [ -n "${GH_APP_ID:-}" ] && [ -n "${GH_APP_INSTALLATION_ID:-}" ]
+}
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -246,7 +253,9 @@ create_worktree_pr() {
     echo "$abs_path"
 }
 
-# Create worktree for a new development branch using fork workflow
+# Create worktree for a new development branch.
+# In autonomous mode: pushes directly to upstream with sfa/ branch prefix.
+# In local mode (human-collaborative): uses fork workflow.
 create_worktree_new() {
     local repo_full=$1
     local branch_name=$2
@@ -261,99 +270,155 @@ create_worktree_new() {
     # relative to the -C directory, not the caller's cwd).
     base_dir="$(cd "$base_dir" 2>/dev/null && pwd || mkdir -p "$base_dir" && cd "$base_dir" && pwd)"
 
+    local upstream_url="https://github.com/${repo_full}.git"
     local bare_dir="${base_dir}/${org}/${repo}.git"
     local worktrees_dir="${base_dir}/${org}/${repo}-worktrees"
     local worktree_dir="${worktrees_dir}/${branch_name}"
 
-    # Step 1: Ensure fork exists
-    log_info "Ensuring fork exists for ${repo_full}..."
-    gh repo fork "${repo_full}" --clone=false 2>&1 | grep -v "already exists" >&2 || true
+    if is_autonomous_mode; then
+        # --- App mode: push directly to upstream with sfa/ prefix ---
+        log_info "Autonomous mode detected (GH_APP_ID set) — pushing directly to upstream"
 
-    # Get current user's GitHub username
-    local gh_user
-    gh_user=$(gh api user -q '.login')
-    if [ -z "$gh_user" ]; then
-        log_error "Failed to get GitHub username"
-        exit 1
-    fi
-    log_info "GitHub user: ${gh_user}"
+        # Ensure branch name has sfa/ prefix
+        if [[ "$branch_name" != sfa/* ]]; then
+            branch_name="sfa/${branch_name}"
+            worktree_dir="${worktrees_dir}/${branch_name}"
+            log_info "Branch name prefixed: ${branch_name}"
+        fi
 
-    local fork_url="https://github.com/${gh_user}/${repo}.git"
-    local upstream_url="https://github.com/${repo_full}.git"
+        # Bare clone from upstream (or reuse existing)
+        ensure_bare_clone "$bare_dir" "$upstream_url"
+        configure_git_credentials "$bare_dir"
 
-    # Step 2: Bare clone from upstream (or reuse existing)
-    ensure_bare_clone "$bare_dir" "$upstream_url"
+        # Fetch upstream base branch
+        log_info "Fetching upstream ${base_branch}..."
+        git -C "$bare_dir" fetch origin "${base_branch}" --force
 
-    # Configure credentials for push
-    configure_git_credentials "$bare_dir"
+        # Create worktree
+        mkdir -p "$(dirname "$worktree_dir")"
 
-    # Step 3: Add fork as remote (for pushing)
-    if git -C "$bare_dir" remote get-url fork &> /dev/null; then
-        log_info "Fork remote already configured"
+        if [ -d "$worktree_dir" ]; then
+            log_info "Worktree already exists, resetting..."
+            git -C "$bare_dir" worktree remove "$worktree_dir" --force
+            git -C "$bare_dir" worktree prune
+            git -C "$bare_dir" branch -D "$branch_name" 2>/dev/null || true
+        fi
+
+        log_info "Creating worktree: ${worktree_dir}"
+        log_info "Branching '${branch_name}' from origin/${base_branch}"
+        git -C "$bare_dir" worktree add -b "$branch_name" "$worktree_dir" "origin/${base_branch}"
+
+        # Configure worktree — push to upstream (origin)
+        git -C "$worktree_dir" config remote.origin.url "$upstream_url"
+        git -C "$worktree_dir" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+        git -C "$worktree_dir" config "branch.${branch_name}.remote" origin
+        git -C "$worktree_dir" config "branch.${branch_name}.merge" "refs/heads/${branch_name}"
+
+        # Configure git identity
+        git -C "$worktree_dir" config user.name "server-foundation-agent"
+        git -C "$worktree_dir" config user.email "sfa-bot@redhat.com"
+
+        # Print result
+        local abs_path
+        abs_path=$(cd "$worktree_dir" && pwd)
+        log_info "Worktree ready at: ${abs_path}"
+        log_info "Branch '${branch_name}' created from origin/${base_branch}"
+        log_info "Push target: origin (upstream ${repo_full})"
+        log_info ""
+        log_info "Workflow:"
+        log_info "  cd ${abs_path}"
+        log_info "  # make changes, commit..."
+        log_info "  git push origin ${branch_name}"
+        log_info "  gh pr create --repo ${repo_full}"
+        echo "$abs_path"
     else
-        log_info "Adding fork remote: ${fork_url}"
-        git -C "$bare_dir" remote add fork "$fork_url"
+        # --- Local mode: fork workflow ---
+        log_info "Local mode — using fork workflow"
+
+        # Ensure fork exists
+        log_info "Ensuring fork exists for ${repo_full}..."
+        gh repo fork "${repo_full}" --clone=false 2>&1 | grep -v "already exists" >&2 || true
+
+        # Get current user's GitHub username
+        local gh_user
+        gh_user=$(gh api user -q '.login')
+        if [ -z "$gh_user" ]; then
+            log_error "Failed to get GitHub username"
+            exit 1
+        fi
+        log_info "GitHub user: ${gh_user}"
+
+        local fork_url="https://github.com/${gh_user}/${repo}.git"
+
+        # Bare clone from upstream (or reuse existing)
+        ensure_bare_clone "$bare_dir" "$upstream_url"
+        configure_git_credentials "$bare_dir"
+
+        # Add fork as remote (for pushing)
+        if git -C "$bare_dir" remote get-url fork &> /dev/null; then
+            log_info "Fork remote already configured"
+        else
+            log_info "Adding fork remote: ${fork_url}"
+            git -C "$bare_dir" remote add fork "$fork_url"
+        fi
+
+        # Fetch upstream base branch
+        log_info "Fetching upstream ${base_branch}..."
+        git -C "$bare_dir" fetch origin "${base_branch}" --force
+
+        # Create worktree
+        mkdir -p "$worktrees_dir"
+
+        if [ -d "$worktree_dir" ]; then
+            log_info "Worktree already exists, resetting..."
+            git -C "$bare_dir" worktree remove "$worktree_dir" --force
+            git -C "$bare_dir" worktree prune
+            git -C "$bare_dir" branch -D "$branch_name" 2>/dev/null || true
+        fi
+
+        log_info "Creating worktree: ${worktree_dir}"
+        log_info "Branching '${branch_name}' from origin/${base_branch}"
+        git -C "$bare_dir" worktree add -b "$branch_name" "$worktree_dir" "origin/${base_branch}"
+
+        # Configure worktree for fork workflow
+        git -C "$worktree_dir" config remote.origin.url "$upstream_url"
+        git -C "$worktree_dir" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+
+        if ! git -C "$worktree_dir" remote get-url fork &> /dev/null; then
+            git -C "$worktree_dir" remote add fork "$fork_url"
+        else
+            git -C "$worktree_dir" remote set-url fork "$fork_url"
+        fi
+
+        # Set push to fork by default
+        git -C "$worktree_dir" config "branch.${branch_name}.remote" fork
+        git -C "$worktree_dir" config "branch.${branch_name}.merge" "refs/heads/${branch_name}"
+
+        # Configure git identity for commits
+        local git_name git_email
+        git_name=$(git config --global user.name 2>/dev/null || echo "")
+        git_email=$(git config --global user.email 2>/dev/null || echo "")
+        if [ -n "$git_name" ]; then
+            git -C "$worktree_dir" config user.name "$git_name"
+        fi
+        if [ -n "$git_email" ]; then
+            git -C "$worktree_dir" config user.email "$git_email"
+        fi
+
+        # Print result
+        local abs_path
+        abs_path=$(cd "$worktree_dir" && pwd)
+        log_info "Worktree ready at: ${abs_path}"
+        log_info "Branch '${branch_name}' created from origin/${base_branch}"
+        log_info "Push target: fork (${gh_user}/${repo})"
+        log_info ""
+        log_info "Workflow:"
+        log_info "  cd ${abs_path}"
+        log_info "  # make changes, commit..."
+        log_info "  git push fork ${branch_name}"
+        log_info "  gh pr create --repo ${repo_full} --head ${gh_user}:${branch_name}"
+        echo "$abs_path"
     fi
-
-    # Step 4: Fetch upstream to get the latest base branch
-    log_info "Fetching upstream ${base_branch}..."
-    git -C "$bare_dir" fetch origin "${base_branch}" --force
-
-    # Step 5: Create worktree with new branch from upstream base
-    mkdir -p "$worktrees_dir"
-
-    if [ -d "$worktree_dir" ]; then
-        log_info "Worktree already exists, resetting..."
-        git -C "$bare_dir" worktree remove "$worktree_dir" --force
-        git -C "$bare_dir" worktree prune
-        # Delete old local branch if exists
-        git -C "$bare_dir" branch -D "$branch_name" 2>/dev/null || true
-    fi
-
-    log_info "Creating worktree: ${worktree_dir}"
-    log_info "Branching '${branch_name}' from origin/${base_branch}"
-    git -C "$bare_dir" worktree add -b "$branch_name" "$worktree_dir" "origin/${base_branch}"
-
-    # Step 6: Configure worktree for fork workflow
-    # origin = upstream (for fetching)
-    git -C "$worktree_dir" config remote.origin.url "$upstream_url"
-    git -C "$worktree_dir" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-
-    # fork = user's fork (for pushing)
-    if ! git -C "$worktree_dir" remote get-url fork &> /dev/null; then
-        git -C "$worktree_dir" remote add fork "$fork_url"
-    else
-        git -C "$worktree_dir" remote set-url fork "$fork_url"
-    fi
-
-    # Set push to fork by default
-    git -C "$worktree_dir" config "branch.${branch_name}.remote" fork
-    git -C "$worktree_dir" config "branch.${branch_name}.merge" "refs/heads/${branch_name}"
-
-    # Configure git identity for commits
-    local git_name git_email
-    git_name=$(git config --global user.name 2>/dev/null || echo "")
-    git_email=$(git config --global user.email 2>/dev/null || echo "")
-    if [ -n "$git_name" ]; then
-        git -C "$worktree_dir" config user.name "$git_name"
-    fi
-    if [ -n "$git_email" ]; then
-        git -C "$worktree_dir" config user.email "$git_email"
-    fi
-
-    # Print absolute path to stdout
-    local abs_path
-    abs_path=$(cd "$worktree_dir" && pwd)
-    log_info "Worktree ready at: ${abs_path}"
-    log_info "Branch '${branch_name}' created from origin/${base_branch}"
-    log_info "Push target: fork (${gh_user}/${repo})"
-    log_info ""
-    log_info "Workflow:"
-    log_info "  cd ${abs_path}"
-    log_info "  # make changes, commit..."
-    log_info "  git push fork ${branch_name}"
-    log_info "  gh pr create --repo ${repo_full} --head ${gh_user}:${branch_name}"
-    echo "$abs_path"
 }
 
 # --- Main ---

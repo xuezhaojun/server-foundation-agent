@@ -52,8 +52,12 @@ All Python scripts use standard library only. Modules: `json`, `sys`, `os`, `dat
 | Variable | Description | Used By |
 |----------|-------------|---------|
 | `GITHUB_TOKEN` | GitHub personal access token (implicit via `gh auth`) | sfa-github-fetch-prs, sfa-workspace-clone, sfa-workspace-cleanup |
+| `GH_APP_ID` | GitHub App ID (autonomous mode only) | sfa-workspace-clone |
+| `GH_APP_INSTALLATION_ID` | GitHub App Installation ID (autonomous mode only) | sfa-workspace-clone |
 
-**Access required**: Read/write to `stolostron` and `open-cluster-management-io` orgs, fork repos, create PRs, access GitHub Projects V2 board `stolostron/8`.
+**Access required**: Read/write to `stolostron` and `open-cluster-management-io` orgs, fork repos, create PRs.
+
+**Autonomous mode**: When both `GH_APP_ID` and `GH_APP_INSTALLATION_ID` are set, the agent runs in autonomous mode — pushes directly to upstream repos with `sfa/` branch prefix instead of using the fork workflow. See [Development Guide](development-guide.md#push-workflow).
 
 ### Slack (1 skill)
 

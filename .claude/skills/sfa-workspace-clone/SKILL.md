@@ -19,7 +19,8 @@ This skill clones a GitHub repository (as a bare repo) and creates a git worktre
 
 ### 2. New Branch Mode — Start new development
 
-Uses the fork workflow automatically: ensures fork exists, branches from upstream, pushes to fork.
+In **local mode** (default): uses the fork workflow — ensures fork exists, branches from upstream, pushes to fork.
+In **autonomous mode** (`GH_APP_ID` + `GH_APP_INSTALLATION_ID` set): pushes directly to upstream with `sfa/` branch prefix.
 
 ```bash
 # Branch from main (default)
@@ -51,9 +52,31 @@ workspace/
 
 This layout enables **concurrent development** — multiple worktrees share one bare clone, so you can work on several branches of the same repo simultaneously.
 
-## Fork Workflow (New Branch Mode)
+## Push Workflow (New Branch Mode)
 
-The `--new` mode automates the full fork workflow:
+The `--new` mode automatically selects the right workflow based on the execution environment:
+
+### Autonomous Mode (remote/self-running)
+
+Detected when `GH_APP_ID` and `GH_APP_INSTALLATION_ID` environment variables are set. The agent pushes directly to the upstream repo.
+
+1. Bare clone from **upstream** (reuse if exists)
+2. Auto-prefix branch name with `sfa/` (e.g., `upgrade-anp` → `sfa/upgrade-anp`)
+3. Create new branch from `origin/<base-branch>`
+4. Configure `git push` to push to **origin** (upstream)
+
+After making changes:
+
+```bash
+cd workspace/<org>/<repo>-worktrees/sfa/<branch>/
+# make changes, commit...
+git push origin sfa/<branch-name>
+gh pr create --repo <org/repo>
+```
+
+### Local Mode (human-collaborative, default)
+
+Used when the GitHub App env vars are not set. Uses the fork workflow.
 
 1. `gh repo fork <upstream> --clone=false` — ensures your fork exists
 2. Bare clone from **upstream** (reuse if exists)

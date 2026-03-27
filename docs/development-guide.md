@@ -57,9 +57,19 @@ This makes it easy to identify backport or release-specific PRs at a glance.
 - Reference related Jira issues or GitHub issues when applicable.
 - When updating a PR (adding commits, rebasing), check if the description also needs updating.
 
-### Fork Workflow
+### Push Workflow
 
-- Always use the fork workflow: clone from your fork, push to your fork, create PR from fork to upstream.
+The agent supports two push modes, selected automatically based on environment:
+
+**Autonomous mode** — when `GH_APP_ID` and `GH_APP_INSTALLATION_ID` are set (agent running self-sufficiently on a remote machine):
+
+- Push directly to the upstream repo.
+- All branches MUST use the `sfa/` prefix (e.g., `sfa/upgrade-anp`) to identify agent-created branches.
+- PR creation: `gh pr create --repo <org/repo>` (same-repo PR, no `--head` needed).
+
+**Local mode** (default) — human-collaborative development on a developer's machine:
+
+- Always use the fork workflow: push to your fork, create PR from fork to upstream.
 - Use `gh repo fork <upstream> --clone=false` to ensure a fork exists before cloning.
 - Never push branches directly to upstream repos.
 
