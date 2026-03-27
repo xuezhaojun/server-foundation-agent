@@ -30,5 +30,6 @@ Skills are task-specific workflows the agent can execute. Each skill has a step-
 
 1. Create `.claude/skills/sfa-<category>-<name>/SKILL.md` with frontmatter (`name`, `description`) and a step-by-step checklist
 2. Update this table
-3. (Optional) Add a CronJob in `deploy/cronjobs/` if the skill should run on a schedule
-4. Open a PR — the skill is available to the agent once merged
+3. **Cross-validate dependencies**: if the skill introduces new CLI tools or runtimes, update both `build/Dockerfile` and `docs/dependencies.md` (see [Development Guide — Dependency Management](../../docs/development-guide.md#dependency-management-critical))
+4. (Optional) Add a CronJob in `deploy/cronjobs/` if the skill should run on a schedule
+5. Open a PR — the skill is available to the agent once merged

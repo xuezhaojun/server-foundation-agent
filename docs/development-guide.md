@@ -103,6 +103,15 @@ The `main` branch automatically fast-forwards to the **latest release branch** (
 
 See [releases.md](releases.md) for the full active branch list and concrete examples.
 
+## Dependency Management (CRITICAL)
+
+When adding, removing, or modifying any skill, **always cross-validate** against dependency management artifacts:
+
+1. **`build/Dockerfile`** — does it include all CLI tools and runtimes the skill requires? If not, add them.
+2. **`docs/dependencies.md`** — is the dependency documented with correct "Used By" and "Required/Conditional" status? Update the Per-Skill Dependency Matrix.
+
+Both files must stay in sync. A new skill that needs a tool not in the Dockerfile will fail at runtime in container. A removed skill may leave unused dependencies bloating the image.
+
 ## SFA Footprint (Traceability)
 
 All actions performed by server-foundation-agent **MUST** leave a traceable footprint for data-driven reporting and builder journey presentations.
