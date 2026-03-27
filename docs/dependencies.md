@@ -8,6 +8,7 @@ All external dependencies required for the server-foundation-agent to run at ful
 |---------|-------------|---------|-------|
 | **Bash** | 4.0+ | All skills & workflows | Shell scripts throughout |
 | **Python 3** | 3.6+ | 7 skills, 3 workflows | stdlib only, no pip packages needed |
+| **Go** | 1.24+ | All SF repos (coding agent) | Build, test, vet, mod tidy |
 
 > **No Node.js / JavaScript runtime is required.** All scripts are Bash or Python.
 
@@ -25,16 +26,27 @@ All Python scripts use standard library only. Modules: `json`, `sys`, `os`, `dat
 | `gh` | Yes | 4 skills (fetch-prs, workspace-clone, workspace-cleanup, jira-inbox) | `brew install gh` |
 | `oc` | Conditional | 4 skills (install-acm, bug-reproduce, cluster-pools, uninstall-acm) | [OpenShift CLI](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/) |
 | `kubectl` | Conditional | 3 skills (install-acm, bug-reproduce, uninstall-acm) | `brew install kubectl` or bundled with `oc` |
+| `helm` | Conditional | SF repos with Helm charts (registration-operator, cluster-manager) | `brew install helm` |
 | `aws` | Conditional | 1 skill (cluster-pools) | `brew install awscli` |
-| `hiveutil` | Optional | 1 skill (cluster-pools, AWS cleanup only) | Build from [openshift/hive](https://github.com/openshift/hive) |
+| `hiveutil` | Conditional | 1 skill (cluster-pools, AWS cleanup) | `go install github.com/openshift/hive/contrib/cmd/hiveutil@latest` |
+| `make` | Yes | All SF repos (Makefiles) | System default or `brew install make` |
+| `gcc` | Yes | Go CGO compilation | System default (Xcode CLT on macOS) |
+| `openssl` | Yes | GitHub App JWT signing (github-app-iat.sh) | System default or `brew install openssl` |
+| `golangci-lint` | Yes | Most SF repos CI linting | `brew install golangci-lint` |
 | `base64` | Yes | 1 skill (cluster-pools) | Built-in on macOS/Linux |
-| `yq` | Recommended | YAML validation (per CLAUDE.md global rules) | `brew install yq` |
+| `yq` | Yes | YAML validation (per CLAUDE.md global rules) | `brew install yq` |
+
+### LSP Servers (coding agent)
+
+| Binary | Purpose | Install |
+|--------|---------|---------|
+| `gopls` | Go LSP — go-to-definition, find-references, diagnostics | `go install golang.org/x/tools/gopls@latest` |
+| `pylsp` | Python LSP — SFA skills and workflows use Python scripts | `pip install python-lsp-server` |
 
 ### Conditional vs Required
 
-- **Required**: Needed for core agent functionality (Jira, GitHub, workspace management).
+- **Required**: Needed for core agent functionality (Jira, GitHub, workspace management, Go development).
 - **Conditional**: Only needed if using cluster/ACM-related skills. The agent works without them for Jira/GitHub/reporting tasks.
-- **Optional**: `hiveutil` is only needed for AWS orphan resource cleanup in `sfa-cluster-pools`.
 
 ## Credentials & Environment Variables
 
@@ -134,26 +146,39 @@ Different skills connect to **different clusters** — there is no single shared
 
 ```bash
 # 1. Install required CLI tools (macOS)
-brew install jq gh yq
+brew install jq gh yq golangci-lint
 
-# 2. Install conditional CLI tools (only if using cluster skills)
+# 2. Install Go (https://go.dev/dl/)
+# Verify: go version  # 1.24+ required
+
+# 3. Install Go LSP and Python LSP
+go install golang.org/x/tools/gopls@latest
+pip install python-lsp-server
+
+# 4. Install conditional CLI tools (only if using cluster skills)
 # Download oc from https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/
-brew install awscli kubectl
+brew install awscli kubectl helm
+go install github.com/openshift/hive/contrib/cmd/hiveutil@latest
 
-# 3. Authenticate GitHub CLI
+# 5. Authenticate GitHub CLI
 gh auth login
 
-# 4. Set Jira credentials
+# 6. Set Jira credentials
 export JIRA_EMAIL="your-email@redhat.com"
 export JIRA_API_TOKEN="your-api-token"
 
-# 5. (Optional) Set Slack webhook
+# 7. (Optional) Set Slack webhook
 export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
 
-# 6. (Optional) Set AWS credentials for cluster-pools
+# 8. (Optional) Set AWS credentials for cluster-pools
 export AWS_ACCESS_KEY_ID="..."
 export AWS_SECRET_ACCESS_KEY="..."
 
-# 7. Verify Python 3 is available
+# 9. Verify runtimes
 python3 --version  # 3.6+ required, stdlib only
+go version         # 1.24+ required
 ```
+
+## Container Image
+
+All dependencies are also packaged as a container image in [`build/Dockerfile`](../build/README.md). This is the executable version of this document — they must stay in sync.

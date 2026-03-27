@@ -83,6 +83,7 @@ All detailed docs live under `docs/` and **MUST** be linked here. When adding or
 
 | Document | Description |
 |----------|-------------|
+| [build/README.md](build/README.md) | Container image (Dockerfile): all runtime dependencies managed as code |
 | [deploy/README.md](deploy/README.md) | Architecture, KubeOpenCode platform setup, deployment steps, and operational guide |
 | [docs/dependencies.md](docs/dependencies.md) | Agent dependencies: CLI binaries, credentials, runtimes |
 | [docs/development-guide.md](docs/development-guide.md) | **(CRITICAL)** Development standards: commits, PRs, code style, SFA footprint. All development work MUST follow this guide |
