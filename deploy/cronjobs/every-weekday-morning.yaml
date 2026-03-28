@@ -51,7 +51,7 @@ spec:
                   apiVersion: kubeopencode.io/v1alpha1
                   kind: Task
                   metadata:
-                    generateName: ${task_name}-task-
+                    generateName: ${task_name}-
                     namespace: server-foundation
                     labels:
                       app.kubernetes.io/name: ${task_name}
@@ -61,7 +61,7 @@ spec:
                       kubeopencode.io/triggered-by: cronjob/every-weekday-morning-cron
                   spec:
                     agentRef:
-                      name: server-foundation-agent
+                      name: server-foundation-agent-live
                     description: |
                       Follow @${workflow} to complete the task.
                   EOF
