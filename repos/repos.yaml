@@ -105,6 +105,10 @@ repos:
         description: Konflux build catalog for stolostron
       - repo: stolostron/acm-infra
         description: ACM infrastructure and build tooling
+        # NOTE: PRs must be from branches in this repo, NOT from forks.
+        # GitHub Actions workflows use repo secrets (JIRA_API_TOKEN, etc.)
+        # which are not accessible to pull_request events from forks.
+        no_fork: true
 
   # ============================================================
   # Documentation
