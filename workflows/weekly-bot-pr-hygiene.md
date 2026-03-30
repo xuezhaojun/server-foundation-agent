@@ -94,16 +94,16 @@ For PRs that do NOT need a sub-agent, write their diagnosis result JSON directly
 
 ## Phase 3: Diagnose (Sub-Agents)
 
-For each PR with `check_status == "has_failures"`, spawn a **sub-agent** to diagnose and optionally fix it. This prevents context window exhaustion when processing many failing PRs.
+For each PR with `check_status == "has_failures"`, spawn a **sub-agent** to diagnose it. Sub-agents classify the failure pattern using GitHub API only — they do **NOT** clone repos or attempt fixes.
 
 ### Sub-Agent Architecture
 
 Each sub-agent:
 1. Receives the PR metadata (from Phase 2 output)
 2. Reads `workflows/weekly-bot-pr-hygiene/diagnose_pr.md` for its instructions
-3. Applies failure patterns from `workflows/weekly-bot-pr-hygiene/failure-patterns/` **in order** (FP-01 → FP-02 → FP-03 → FP-04)
+3. Applies failure patterns **in order** (FP-01 → FP-02 → FP-03 → FP-04) using **Detection sections only**
 4. First match wins — stops checking after a pattern matches
-5. For patterns requiring clone (FP-01, FP-03): uses the `sfa-workspace-clone` skill to check out code, attempt fix, push patch
+5. Uses GitHub API (`gh pr diff`, log fetching) for detection — **no cloning, no fixing**
 6. Writes result to `.output/diagnoses/pr-<NUMBER>.json`
 
 ### Spawning Sub-Agents
@@ -123,7 +123,7 @@ For each PR with has_failures:
 
 **Parallelism**: Spawn up to 3-5 sub-agents concurrently to speed up diagnosis. Each operates independently on its own PR.
 
-**Fork detection**: Sub-agents check `is_fork` before cloning. If true, skip with `skipped-fork`.
+**Fork detection**: Sub-agents check `is_fork`. If true, skip with `skipped-fork`.
 
 ### Diagnosis Result Schema
 
@@ -138,9 +138,9 @@ Each sub-agent writes a JSON file to `.output/diagnoses/pr-<NUMBER>.json`:
   "author": "red-hat-konflux",
   "branch": "backplane-2.9",
   "age_days": 5,
-  "pattern_matched": "go-version-mismatch | e2e-cluster-pool | build-failure | none | unknown",
-  "action": "recommend-merge | patched | retest | needs-manual | skipped-fork | pending",
-  "action_details": "Human-readable description of what was found/done",
+  "pattern_matched": "go-version-mismatch | e2e-cluster-pool | build-failure | sonarcloud | none | unknown",
+  "action": "recommend-merge | retest | needs-fix | needs-manual | skipped-fork | pending",
+  "action_details": "Human-readable description of what was found",
   "failed_checks": ["ci/prow/images", "ci/prow/e2e"],
   "is_fork": false
 }
@@ -151,9 +151,9 @@ Each sub-agent writes a JSON file to `.output/diagnoses/pr-<NUMBER>.json`:
 | Category | Meaning | Source |
 |----------|---------|--------|
 | **Recommend Merge** | All checks passed | Pre-diagnosis filter |
-| **Auto-Patched** | Agent found and pushed a fix | Sub-agent, FP-01, FP-03, or FP-04 |
+| **Needs Fix** | Known pattern matched, fix not attempted | Sub-agent, FP-01, FP-03, or FP-04 |
 | **Recommend Retest** | Infra issue, just needs `/retest` | Sub-agent, FP-02 |
-| **Needs Manual** | Agent could not fix automatically | Sub-agent, default |
+| **Needs Manual** | No known pattern matched | Sub-agent, default |
 | **Skipped (Fork)** | Cross-repo PR, can't push | Sub-agent, fork detection |
 | **Pending** | Checks still running | Pre-diagnosis filter |
 
@@ -171,7 +171,7 @@ The script reads all `pr-*.json` files from the diagnoses directory and produces
 
 1. Executive Summary (total, by category, by bot author)
 2. Recommend Merge
-3. Auto-Patched (with pattern matched and details)
+3. Needs Fix (with pattern matched and details)
 4. Recommend Retest
 5. Needs Manual Intervention (with failed checks and details)
 6. Skipped (Fork PRs)
@@ -198,12 +198,12 @@ bash .claude/skills/sfa-slack-notify/send_to_slack.sh .output/bot_slack_payload.
 
 - **Header**: Robot emoji + "Bot PR Hygiene — YYYY-MM-DD"
 - **Summary**: Total PRs, health percentage (resolved/total), counts per category
-- **Sections**: Recommend Merge, Auto-Patched, Recommend Retest, Needs Manual (show ALL PRs, no truncation)
+- **Sections**: Recommend Merge, Needs Fix, Recommend Retest, Needs Manual (show ALL PRs, no truncation)
 - **Context footer**: Generation timestamp
 
 ### Health Score
 
-Health = percentage of PRs resolved (merge + patched + retest) vs total:
+Health = percentage of PRs resolved (merge + retest) vs total:
 - 60%+ = green heart
 - 40-59% = yellow heart
 - <40% = red heart
@@ -212,14 +212,14 @@ Health = percentage of PRs resolved (merge + patched + retest) vs total:
 
 ## Failure Patterns
 
-Failure patterns are defined in `workflows/weekly-bot-pr-hygiene/failure-patterns/` and applied in numeric order. Each pattern has a structured format with Detection, Fix Procedure, and Verification sections.
+Failure patterns are defined in `workflows/weekly-bot-pr-hygiene/failure-patterns/` and applied in numeric order. Sub-agents use **only the Detection section** of each pattern for classification — Fix Procedure sections are not executed.
 
-| ID | Pattern | Action on Match | Requires Clone |
-|----|---------|-----------------|----------------|
-| FP-01 | [Go Version Mismatch](weekly-bot-pr-hygiene/failure-patterns/01-go-version-mismatch.md) | `patched` | Yes |
-| FP-02 | [E2E Cluster Pool Claim](weekly-bot-pr-hygiene/failure-patterns/02-e2e-cluster-pool.md) | `retest` | No |
-| FP-03 | [Locally Verifiable CI Failure](weekly-bot-pr-hygiene/failure-patterns/03-build-failure.md) | `patched` | Yes |
-| FP-04 | [SonarCloud Code Analysis](weekly-bot-pr-hygiene/failure-patterns/04-sonarcloud.md) | `patched` | Yes |
+| ID | Pattern | Action on Match |
+|----|---------|-----------------|
+| FP-01 | [Go Version Mismatch](weekly-bot-pr-hygiene/failure-patterns/01-go-version-mismatch.md) | `needs-fix` |
+| FP-02 | [E2E Cluster Pool Claim](weekly-bot-pr-hygiene/failure-patterns/02-e2e-cluster-pool.md) | `retest` |
+| FP-03 | [Locally Verifiable CI Failure](weekly-bot-pr-hygiene/failure-patterns/03-build-failure.md) | `needs-fix` |
+| FP-04 | [SonarCloud Code Analysis](weekly-bot-pr-hygiene/failure-patterns/04-sonarcloud.md) | `needs-fix` |
 
 To add a new failure pattern:
 1. Create `workflows/weekly-bot-pr-hygiene/failure-patterns/NN-pattern-name.md`

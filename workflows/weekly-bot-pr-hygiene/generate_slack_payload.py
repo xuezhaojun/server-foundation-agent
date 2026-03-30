@@ -92,14 +92,14 @@ def main():
         by_action.setdefault(d["action"], []).append(d)
 
     n_merge = len(by_action.get("recommend-merge", []))
-    n_patched = len(by_action.get("patched", []))
+    n_fix = len(by_action.get("needs-fix", []))
     n_retest = len(by_action.get("retest", []))
     n_manual = len(by_action.get("needs-manual", []))
     n_fork = len(by_action.get("skipped-fork", []))
     n_pending = len(by_action.get("pending", []))
 
-    # Health: PRs that are resolved (merge + patched + retest) vs total
-    n_resolved = n_merge + n_patched + n_retest
+    # Health: PRs that are resolved (merge + retest) vs total
+    n_resolved = n_merge + n_retest
     health_pct = int((n_resolved / total) * 100) if total > 0 else 100
 
     if health_pct >= 60:
@@ -111,7 +111,7 @@ def main():
 
     fallback_text = (
         f"Server Foundation Weekly Bot PR Hygiene \u2014 {today}: "
-        f"{total} bot PRs, {n_merge} ready to merge, {n_patched} auto-patched, "
+        f"{total} bot PRs, {n_merge} ready to merge, {n_fix} needs fix, "
         f"{n_manual} needs manual"
     )
 
@@ -130,7 +130,7 @@ def main():
                 "text": (
                     f"{SF_GROUP_MENTION}\n"
                     f"*Summary:* {total} bot PRs \u00b7 {health_emoji} {health_pct}% resolved\n"
-                    f"*Merge:* {n_merge}  \u00b7  *Patched:* {n_patched}  \u00b7  *Retest:* {n_retest}\n"
+                    f"*Merge:* {n_merge}  \u00b7  *Fix:* {n_fix}  \u00b7  *Retest:* {n_retest}\n"
                     f"*Manual:* {n_manual}  \u00b7  *Fork:* {n_fork}  \u00b7  *Pending:* {n_pending}"
                 )
             }
@@ -149,11 +149,11 @@ def main():
 
     blocks.append({"type": "divider"})
 
-    # --- Auto-Patched ---
-    patched_prs = sorted(by_action.get("patched", []), key=lambda x: x["repo"])
-    if patched_prs:
-        text = f"*\U0001f527 Auto-Patched ({n_patched})*\n"
-        text += "\n".join(format_patched_pr(d) for d in patched_prs)
+    # --- Needs Fix ---
+    fix_prs = sorted(by_action.get("needs-fix", []), key=lambda x: x["repo"])
+    if fix_prs:
+        text = f"*\U0001f527 Needs Fix ({n_fix})*\n"
+        text += "\n".join(format_patched_pr(d) for d in fix_prs)
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
         blocks.append({"type": "divider"})
 

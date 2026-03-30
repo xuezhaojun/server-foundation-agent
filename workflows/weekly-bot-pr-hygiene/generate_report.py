@@ -18,7 +18,7 @@ from collections import defaultdict
 # Report category order and display names
 CATEGORIES = [
     ("recommend-merge", "Recommend Merge"),
-    ("patched", "Auto-Patched"),
+    ("needs-fix", "Needs Fix"),
     ("retest", "Recommend Retest"),
     ("needs-manual", "Needs Manual Intervention"),
     ("skipped-fork", "Skipped (Fork PRs)"),
@@ -109,21 +109,21 @@ def main():
         md.append("> No bot PRs are currently ready to merge.")
     md.extend(["", "---", ""])
 
-    # --- Auto-Patched ---
+    # --- Needs Fix ---
     md.extend([
-        "## Auto-Patched",
+        "## Needs Fix",
         "",
-        "The agent identified a known failure pattern and pushed a fix. CI should re-run automatically.",
+        "Known failure pattern identified. Manual fix or a separate fix task is needed.",
         "",
     ])
-    prs = by_action.get("patched", [])
+    prs = by_action.get("needs-fix", [])
     if prs:
         md.append("| PR | Repository | Branch | Title | Pattern | Details |")
         md.append("|----|------------|--------|-------|---------|---------|")
         for d in sorted(prs, key=lambda x: x["repo"]):
             md.append(f"| {format_pr_link(d)} | {d['repo']} | {d['branch']} | {d['title']} | {d['pattern_matched']} | {d['action_details']} |")
     else:
-        md.append("> No PRs were auto-patched.")
+        md.append("> No PRs with known fix patterns.")
     md.extend(["", "---", ""])
 
     # --- Recommend Retest ---
@@ -199,7 +199,7 @@ def main():
     action_keys = [a for a, _ in CATEGORIES]
     action_short = {
         "recommend-merge": "Merge",
-        "patched": "Patched",
+        "needs-fix": "Fix",
         "retest": "Retest",
         "needs-manual": "Manual",
         "skipped-fork": "Fork",

@@ -1,6 +1,6 @@
 # Sub-Agent Instructions: Diagnose a Single Bot PR
 
-You are a diagnosis sub-agent for the weekly bot PR hygiene workflow. Your job is to diagnose **one** failing bot PR by applying failure patterns in order, and optionally attempt an auto-fix.
+You are a diagnosis sub-agent for the weekly bot PR hygiene workflow. Your job is to diagnose **one** failing bot PR by applying failure patterns in order. **Diagnosis only — do NOT attempt fixes or clone repositories.**
 
 ## Input
 
@@ -28,8 +28,7 @@ You receive a single PR object with these fields:
 Before applying failure patterns, handle these cases:
 
 ### Fork Detection
-If `is_fork` is `true`, the agent cannot push to external forks.
-Write the result immediately:
+If `is_fork` is `true`:
 ```json
 {
   "pattern_matched": "none",
@@ -39,7 +38,7 @@ Write the result immediately:
 ```
 
 ### All Checks Passed
-If `check_status` is `all_passed`, no diagnosis needed:
+If `check_status` is `all_passed`:
 ```json
 {
   "pattern_matched": "none",
@@ -49,7 +48,7 @@ If `check_status` is `all_passed`, no diagnosis needed:
 ```
 
 ### Pending Checks
-If `check_status` is `all_pending` or `mixed` (has pending but no failures):
+If `check_status` is `all_pending` or `mixed`:
 ```json
 {
   "pattern_matched": "none",
@@ -58,26 +57,73 @@ If `check_status` is `all_pending` or `mixed` (has pending but no failures):
 }
 ```
 
-## Failure Pattern Application
+## Failure Pattern Application (Diagnosis Only)
 
 For PRs with `check_status == "has_failures"`, apply failure patterns **in order**. First match wins.
 
-Read each failure pattern file from the `failure-patterns/` directory:
+For each pattern, follow **only the Detection section** from the failure pattern file. Do NOT follow Fix Procedure or Verification sections. Do NOT clone any repository.
 
-1. `workflows/weekly-bot-pr-hygiene/failure-patterns/01-go-version-mismatch.md` (FP-01)
-2. `workflows/weekly-bot-pr-hygiene/failure-patterns/02-e2e-cluster-pool.md` (FP-02)
-3. `workflows/weekly-bot-pr-hygiene/failure-patterns/03-build-failure.md` (FP-03)
-4. `workflows/weekly-bot-pr-hygiene/failure-patterns/04-sonarcloud.md` (FP-04)
+### Pattern 1: Go Version Mismatch (FP-01)
 
-For each pattern:
-1. Follow the **Detection** section to check if the pattern matches.
-2. If matched, follow the **Fix Procedure** section to attempt a fix.
-3. Follow the **Verification** section to confirm the fix.
-4. **Stop** after the first matching pattern — do not check remaining patterns.
+**Detection** (use GitHub API only, no clone):
+1. Run `gh pr diff <number> -R <repo> --name-only` and check if `go.mod` is in the changed files.
+2. If yes, run `gh pr diff <number> -R <repo>` and look for a changed `go X.Y` directive.
+3. Match if: `go.mod` has a changed `go X.Y` directive AND a build/image check failed.
+
+**If matched:**
+```json
+{
+  "pattern_matched": "go-version-mismatch",
+  "action": "needs-fix",
+  "action_details": "Go directive changed from X.Y to X.Z — Dockerfiles and workflows likely need updating"
+}
+```
+
+### Pattern 2: E2E Cluster Pool Claim (FP-02)
+
+**Detection**:
+1. Check if any failed check name contains `e2e` (case-insensitive).
+2. If yes, fetch the check run link and look for cluster pool failure indicators (see `failure-patterns/02-e2e-cluster-pool.md` for the full list).
+
+**If matched:**
+```json
+{
+  "pattern_matched": "e2e-cluster-pool",
+  "action": "retest",
+  "action_details": "E2E check '<name>' failed due to cluster pool claim issue — recommend /retest"
+}
+```
+
+### Pattern 3: Build / Test / Verify Failure (FP-03)
+
+**Detection**:
+1. Check if any failed check matches a locally verifiable pattern: `ci/prow/images`, `build`, `image`, `ci/prow/unit`, `unit`, `ci/prow/integration`, `integration`, `ci/prow/verify`, `verify` (but not `verify-deps`), `ci/prow/verify-deps`.
+
+**If matched:**
+```json
+{
+  "pattern_matched": "build-failure",
+  "action": "needs-fix",
+  "action_details": "Locally verifiable CI failure: [list failed checks]. Likely fixable by cloning and running make targets."
+}
+```
+
+### Pattern 4: SonarCloud (FP-04)
+
+**Detection**:
+1. Check if `SonarCloud Code Analysis` is the **only** entry in `failed_checks`.
+
+**If matched:**
+```json
+{
+  "pattern_matched": "sonarcloud",
+  "action": "needs-fix",
+  "action_details": "SonarCloud is the only failing check — all build/test checks passed"
+}
+```
 
 ### Default (No Pattern Matched)
 
-If no failure pattern matches:
 ```json
 {
   "pattern_matched": "unknown",
@@ -106,8 +152,8 @@ mkdir -p .output/diagnoses
   "branch": "backplane-2.9",
   "age_days": 5,
   "pattern_matched": "go-version-mismatch | e2e-cluster-pool | build-failure | sonarcloud | none | unknown",
-  "action": "recommend-merge | patched | retest | needs-manual | skipped-fork | pending",
-  "action_details": "Human-readable description of what was found/done",
+  "action": "recommend-merge | retest | needs-fix | needs-manual | skipped-fork | pending",
+  "action_details": "Human-readable description of what was found",
   "failed_checks": ["ci/prow/images", "ci/prow/e2e"],
   "is_fork": false
 }
@@ -118,20 +164,15 @@ mkdir -p .output/diagnoses
 | Action | Meaning |
 |--------|---------|
 | `recommend-merge` | All checks passed — safe to merge |
-| `patched` | Agent found and pushed a fix (FP-01, FP-03, or FP-04) |
 | `retest` | Infrastructure issue — recommend `/retest` (FP-02) |
-| `needs-manual` | Agent could not fix automatically |
+| `needs-fix` | Pattern matched, fixable but not attempted (FP-01, FP-03, FP-04) |
+| `needs-manual` | No known pattern matched |
 | `skipped-fork` | Cross-repo PR — cannot push to fork |
 | `pending` | Checks still running |
 
-## Skills Available
-
-- **sfa-workspace-clone**: `.claude/skills/sfa-workspace-clone/SKILL.md` — Clone repo and create worktree for PR branch
-- **sfa-github-fetch-prs**: `.claude/skills/sfa-github-fetch-prs/SKILL.md` — Fetch PR data (already done by main workflow)
-
 ## Important Notes
 
-- Always clean up worktrees after use (even on failure).
-- Do NOT push partial or broken code. If a fix attempt fails, record as `needs-manual`.
-- Use `git commit -s` for all commits (signed-off-by).
+- **Do NOT clone repositories.** All detection uses GitHub API (`gh pr diff`, `gh pr checks`, log fetching).
+- **Do NOT attempt fixes or push code.** This is diagnosis-only mode.
 - Write the result JSON even if diagnosis fails — the main workflow needs it.
+- Keep API calls minimal: use `gh pr diff --name-only` before fetching full diff.
