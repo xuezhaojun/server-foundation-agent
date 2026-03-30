@@ -87,6 +87,12 @@ The script reads [repos.yaml](../repos/repos.yaml) and clones repos into the mat
 | [stolostron/konflux-build-catalog](https://github.com/stolostron/konflux-build-catalog) | Konflux build catalog for stolostron |
 | [stolostron/acm-infra](https://github.com/stolostron/acm-infra) | ACM infrastructure and build tooling |
 
+## QE Tests (`repos/qe/`)
+
+| Repository | Description |
+|------------|-------------|
+| [acmqe-foundation-test](https://github.com/stolostron/acmqe-foundation-test) | QE automated regression tests for all SF components. When Jira issues or Slack mention "automated tests", "auto regression", or QE-reported test failures, check this repo for relevant test code. |
+
 ## Documentation (`repos/docs/`)
 
 | Repository | Description |
