@@ -6,7 +6,8 @@ MCE components use `backplane-X.Y` branches.
 
 | Branch | Status |
 |--------|--------|
-| backplane-2.7 | Oldest active |
+| backplane-2.6 | Oldest active (CVE support until 2027-06-12) |
+| backplane-2.7 | Active |
 | backplane-2.8 | Active |
 | backplane-2.9 | Active |
 | backplane-2.10 | Active |
@@ -15,7 +16,7 @@ MCE components use `backplane-X.Y` branches.
 
 ### Per-repo notes
 
-- **cluster-proxy-addon** — deprecated starting from backplane-2.11, active branches: backplane-2.7 ~ 2.10 only
+- **cluster-proxy-addon** — deprecated starting from backplane-2.11, active branches: backplane-2.6 ~ 2.10 only
 
 ## ACM — `release-*` branches
 
@@ -23,7 +24,8 @@ ACM components use `release-X.Y` branches.
 
 | Branch | Status |
 |--------|--------|
-| release-2.12 | Oldest active |
+| release-2.11 | Oldest active (CVE support until 2027-06-12) |
+| release-2.12 | Active |
 | release-2.13 | Active |
 | release-2.14 | Active |
 | release-2.15 | Active |
@@ -45,12 +47,12 @@ When doing maintenance work (e.g., dependency upgrades) "from branch X to main",
 
 ### MCE repos (backplane-* branches only)
 
-"From backplane-2.7 to main" means: `backplane-2.7`, `2.8`, `2.9`, `2.10`, `2.11`, `main`
+"From backplane-2.6 to main" means: `backplane-2.6`, `2.7`, `2.8`, `2.9`, `2.10`, `2.11`, `main`
 (skip `backplane-2.17`)
 
 ### ACM repos (release-* branches only)
 
-"From release-2.12 to main" means: `release-2.12`, `2.13`, `2.14`, `2.15`, `2.16`, `main`
+"From release-2.11 to main" means: `release-2.11`, `2.12`, `2.13`, `2.14`, `2.15`, `2.16`, `main`
 (skip `release-2.17`)
 
 ### Special repos (both backplane-* and release-* branches)
