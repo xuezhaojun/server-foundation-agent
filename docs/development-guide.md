@@ -4,6 +4,14 @@ This guide defines development standards that **MUST** be followed in all contex
 
 ## Code Standards
 
+### Prefer Kubernetes Ecosystem Libraries
+
+This project is entirely within the Kubernetes ecosystem. When implementing features or fixing bugs, **always** check if a suitable library exists in `k8s.io/*` or `sigs.k8s.io/*` before writing custom code. These libraries are battle-tested, handle edge cases (singleflight, striped caching, proper key derivation, etc.), and are maintained by the community.
+
+- Check `go.mod` indirect dependencies — the library may already be available.
+- Examples: use `k8s.io/apiserver/pkg/authentication/token/cache` instead of a custom token cache; use `k8s.io/client-go/util/workqueue` instead of a custom work queue.
+- Only write custom code when no suitable k8s library exists.
+
 ### Comments
 
 - All code comments **MUST** be written in English.
