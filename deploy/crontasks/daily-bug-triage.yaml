@@ -1,0 +1,27 @@
+# CronTask: Daily Bug Triage
+# Runs every weekday at 09:00 CST (Asia/Shanghai)
+# Manual trigger:
+#   kubectl annotate crontask daily-bug-triage kubeopencode.io/trigger=true -n server-foundation
+apiVersion: kubeopencode.io/v1alpha1
+kind: CronTask
+metadata:
+  name: daily-bug-triage
+  namespace: server-foundation
+  labels:
+    app.kubernetes.io/name: daily-bug-triage
+    app.kubernetes.io/part-of: server-foundation-agent
+spec:
+  schedule: "0 9 * * 1-5"
+  timeZone: Asia/Shanghai
+  concurrencyPolicy: Forbid
+  maxRetainedTasks: 10
+  taskTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: daily-bug-triage
+        app.kubernetes.io/part-of: server-foundation-agent
+    spec:
+      agentRef:
+        name: server-foundation-agent
+      description: |
+        Follow @workflows/daily-bug-triage.md to complete the task.

@@ -1,0 +1,27 @@
+# CronTask: Daily Scrum Prep
+# Runs every weekday at 09:00 CST (Asia/Shanghai)
+# Manual trigger:
+#   kubectl annotate crontask daily-scrum-prep kubeopencode.io/trigger=true -n server-foundation
+apiVersion: kubeopencode.io/v1alpha1
+kind: CronTask
+metadata:
+  name: daily-scrum-prep
+  namespace: server-foundation
+  labels:
+    app.kubernetes.io/name: daily-scrum-prep
+    app.kubernetes.io/part-of: server-foundation-agent
+spec:
+  schedule: "0 9 * * 1-5"
+  timeZone: Asia/Shanghai
+  concurrencyPolicy: Forbid
+  maxRetainedTasks: 10
+  taskTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: daily-scrum-prep
+        app.kubernetes.io/part-of: server-foundation-agent
+    spec:
+      agentRef:
+        name: server-foundation-agent
+      description: |
+        Follow @workflows/daily-scrum-prep.md to complete the task.

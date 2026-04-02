@@ -15,10 +15,10 @@ metadata:
     app.kubernetes.io/part-of: server-foundation-agent
 rules:
   - apiGroups: ["kubeopencode.io"]
-    resources: ["tasks", "tasktemplates"]
+    resources: ["tasks", "tasktemplates", "agenttemplates"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["kubeopencode.io"]
-    resources: ["tasks/status", "tasktemplates/status"]
+    resources: ["tasks/status", "tasktemplates/status", "agenttemplates/status"]
     verbs: ["get", "update", "patch"]
   - apiGroups: ["kubeopencode.io"]
     resources: ["agents"]
@@ -72,39 +72,3 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: server-foundation-task-creator-role
----
-# ServiceAccount for CronJob task creation (same namespace, no cross-namespace binding needed)
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: server-foundation-cron-task-creator
-  labels:
-    app.kubernetes.io/part-of: server-foundation-agent
-    app.kubernetes.io/component: scheduler
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: server-foundation-cron-task-creator-role
-  labels:
-    app.kubernetes.io/part-of: server-foundation-agent
-    app.kubernetes.io/component: scheduler
-rules:
-  - apiGroups: ["kubeopencode.io"]
-    resources: ["tasks"]
-    verbs: ["create"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: server-foundation-cron-task-creator-binding
-  labels:
-    app.kubernetes.io/part-of: server-foundation-agent
-    app.kubernetes.io/component: scheduler
-subjects:
-  - kind: ServiceAccount
-    name: server-foundation-cron-task-creator
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: server-foundation-cron-task-creator-role

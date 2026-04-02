@@ -3,30 +3,35 @@
 ## Architecture
 
 ```
-┌─────────────────────────────────────┐
-│  server-foundation namespace        │
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │  Agent: server-foundation-agent│  │
-│  │  (repo-as-agent)              │  │
-│  └───────────────────────────────┘  │
-│  ┌───────────────────────────────┐  │
-│  │  CronJob: weekly-pr-report    │  │
-│  └───────────────────────────────┘  │
-│  ┌───────────────────────────────┐  │
-│  │  Tasks (created by CronJobs)  │  │
-│  └───────────────────────────────┘  │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  server-foundation namespace                 │
+│                                              │
+│  ┌────────────────────────────────────────┐  │
+│  │  AgentTemplate: server-foundation-     │  │
+│  │  template (shared config blueprint)    │  │
+│  └────────────────────────────────────────┘  │
+│          ▲ templateRef                       │
+│  ┌────────────────────────────────────────┐  │
+│  │  Agent: server-foundation-agent        │  │
+│  │  (always-running, auto-standby)        │  │
+│  └────────────────────────────────────────┘  │
+│          ▲ agentRef                          │
+│  ┌────────────────────────────────────────┐  │
+│  │  CronTasks (scheduled Task creation)  │  │
+│  └────────────────────────────────────────┘  │
+└──────────────────────────────────────────────┘
 ```
 
 ## Platform
 
-The resources in this directory (`Agent`, `Task`, `TaskTemplate`) are custom resources defined by [KubeOpenCode](https://github.com/kubeopencode/kubeopencode) — a Kubernetes-native platform for running AI agents. Standard Kubernetes resources (`CronJob`, `ServiceAccount`, `Role`, etc.) are used alongside them for scheduling and RBAC.
+All resources in this directory are custom resources defined by [KubeOpenCode](https://github.com/kubeopencode/kubeopencode) — a Kubernetes-native platform for running AI agents. Standard Kubernetes resources (`ServiceAccount`, `Role`, etc.) are used alongside them for RBAC.
 
 | Custom Resource | API Group | Description |
 |-----------------|-----------|-------------|
-| `Agent` | `kubeopencode.io/v1alpha1` | Declares an agent (identity, model, credentials, contexts) |
-| `Task` | `kubeopencode.io/v1alpha1` | A unit of work assigned to an agent |
+| `AgentTemplate` | `kubeopencode.io/v1alpha1` | Shared agent configuration blueprint (images, credentials, contexts) |
+| `Agent` | `kubeopencode.io/v1alpha1` | Always-running agent instance (Deployment + Service), inherits from AgentTemplate |
+| `Task` | `kubeopencode.io/v1alpha1` | A unit of work assigned to an agent (via agentRef) or run ephemerally (via templateRef) |
+| `CronTask` | `kubeopencode.io/v1alpha1` | Scheduled Task creation with cron expressions, concurrency control, and retention limits |
 | `TaskTemplate` | `kubeopencode.io/v1alpha1` | Reusable task definition |
 
 All resources are deployed to a single `server-foundation` namespace.
@@ -57,7 +62,7 @@ kubectl apply -f deploy/secrets.yaml -n server-foundation
 kubectl apply -k deploy/
 ```
 
-This deploys agents, CronJobs, RBAC, and namespace — but not secrets. Secrets must already exist in the cluster (see step 1).
+This deploys AgentTemplate, Agent, CronTasks, RBAC, and namespace — but not secrets. Secrets must already exist in the cluster (see step 1).
 
 ## Changing Resources
 
@@ -65,15 +70,17 @@ When renaming, adding, or removing any resource file under `deploy/`, always rev
 
 ## Manual Task Triggers
 
-### Weekly PR Report
+### Trigger a CronTask
 
 ```bash
-kubectl create job test-weekly-pr-report \
-  --from=cronjob/weekly-pr-report-cron \
-  -n server-foundation
+# Trigger any CronTask immediately via annotation
+kubectl annotate crontask weekly-pr-report kubeopencode.io/trigger=true -n server-foundation
+kubectl annotate crontask daily-bug-triage kubeopencode.io/trigger=true -n server-foundation
 ```
 
-### Ad-hoc Task
+### Ad-hoc Task (via Agent)
+
+Runs on the persistent agent (wakes it from standby if needed):
 
 ```bash
 cat <<EOF | kubectl create -f -
@@ -97,17 +104,43 @@ spec:
 EOF
 ```
 
+### Ad-hoc Task (via Template, ephemeral)
+
+Runs as a standalone ephemeral pod — no persistent agent needed:
+
+```bash
+cat <<EOF | kubectl create -f -
+apiVersion: kubeopencode.io/v1alpha1
+kind: Task
+metadata:
+  generateName: adhoc-task-
+  namespace: server-foundation
+spec:
+  templateRef:
+    name: server-foundation-template
+  description: |
+    <your task description here>
+  contexts:
+    - name: target-repo
+      type: Git
+      git:
+        repository: https://github.com/org/repo.git
+        ref: main
+      mountPath: target
+EOF
+```
+
 ## Monitoring
 
 ```bash
 # Watch tasks
 kubectl get tasks -n server-foundation -w
 
-# Check CronJob status
-kubectl get cronjobs -n server-foundation
+# Check CronTask status and next schedule
+kubectl get crontasks -n server-foundation
 
-# View recent jobs
-kubectl get jobs -n server-foundation --sort-by=.metadata.creationTimestamp
+# Check agent status
+kubectl get agents -n server-foundation
 ```
 
 ## Local Development

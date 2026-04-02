@@ -4,7 +4,9 @@ namespace: server-foundation
 resources:
   - namespace.yaml
   - rbac.yaml
+  - agenttemplate.yaml
   - agent.yaml
-  - agent-live.yaml
-  - cronjobs/every-monday-morning.yaml
-  - cronjobs/every-weekday-morning.yaml
+  - crontasks/weekly-pr-report.yaml
+  - crontasks/weekly-bot-pr-hygiene.yaml
+  - crontasks/daily-bug-triage.yaml
+  - crontasks/daily-scrum-prep.yaml

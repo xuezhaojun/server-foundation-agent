@@ -1,6 +1,6 @@
 # Copyright Contributors to the KubeOpenCode project
-# Unified agent using "repo as agent" pattern
-# Identity is defined in .claude/CLAUDE.md, skills in .claude/skills/
+# Persistent agent (always-running Deployment + Service)
+# Inherits shared config from AgentTemplate, adds server-specific settings
 apiVersion: kubeopencode.io/v1alpha1
 kind: Agent
 metadata:
@@ -10,50 +10,10 @@ metadata:
     app.kubernetes.io/name: server-foundation-agent
     app.kubernetes.io/part-of: server-foundation-agent
 spec:
+  templateRef:
+    name: server-foundation-template
   profile: |
     Server Foundation team agent for Red Hat ACM (Advanced Cluster Management) repository maintenance.
-  agentImage: quay.io/kubeopencode/kubeopencode-agent-opencode:latest
-  executorImage: quay.io/kubeopencode/kubeopencode-agent-devbox:latest
-  workspaceDir: /workspace
-  serviceAccountName: server-foundation-agent
-  maxConcurrentTasks: 2
-  quota:
-    maxTaskStarts: 100
-    windowSeconds: 86400
-  config: |
-    {
-      "$schema": "https://opencode.ai/config.json",
-      "model": "google/gemini-3.1-pro-preview",
-      "small_model": "google/gemini-3-flash-preview",
-      "share": "disabled",
-      "autoupdate": false
-    }
-  contexts:
-    - name: agent-repo
-      description: "Agent identity, rules, and skills (repo-as-agent pattern)"
-      type: Git
-      git:
-        repository: https://github.com/stolostron/server-foundation-agent.git
-        ref: main
-        secretRef:
-          name: git-clone-credentials
-      mountPath: .
-  credentials:
-    - name: git
-      secretRef:
-        name: git-settings
-    - name: gemini
-      secretRef:
-        name: gemini-credentials
-    - name: github-app
-      secretRef:
-        name: github-bot-credentials
-    - name: github-token
-      secretRef:
-        name: github-token
-    - name: slack
-      secretRef:
-        name: slack-webhook-url
-    - name: jira-token
-      secretRef:
-        name: jira-token
+  port: 4096
+  standby:
+    idleTimeout: 30m

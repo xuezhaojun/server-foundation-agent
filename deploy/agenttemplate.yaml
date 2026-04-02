@@ -1,17 +1,15 @@
 # Copyright Contributors to the KubeOpenCode project
-# Server-mode agent for interactive/long-running use cases
-# Runs as a persistent OpenCode server (Deployment + Service)
+# Shared agent configuration template (repo-as-agent pattern)
+# Used by: Agent (templateRef inheritance), Task (ephemeral execution via templateRef)
 apiVersion: kubeopencode.io/v1alpha1
-kind: Agent
+kind: AgentTemplate
 metadata:
-  name: server-foundation-agent-live
+  name: server-foundation-template
   namespace: server-foundation
   labels:
-    app.kubernetes.io/name: server-foundation-agent-live
+    app.kubernetes.io/name: server-foundation-template
     app.kubernetes.io/part-of: server-foundation-agent
 spec:
-  profile: |
-    Server Foundation team agent (server mode) for interactive tasks and long-running workflows.
   agentImage: quay.io/kubeopencode/kubeopencode-agent-opencode:latest
   executorImage: quay.io/kubeopencode/kubeopencode-agent-devbox:latest
   workspaceDir: /workspace
@@ -20,8 +18,6 @@ spec:
   quota:
     maxTaskStarts: 100
     windowSeconds: 86400
-  serverConfig:
-    port: 4096
   config: |
     {
       "$schema": "https://opencode.ai/config.json",

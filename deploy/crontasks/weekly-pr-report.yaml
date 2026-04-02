@@ -1,0 +1,27 @@
+# CronTask: Weekly PR Report
+# Runs every Monday at 06:00 CST (Asia/Shanghai)
+# Manual trigger:
+#   kubectl annotate crontask weekly-pr-report kubeopencode.io/trigger=true -n server-foundation
+apiVersion: kubeopencode.io/v1alpha1
+kind: CronTask
+metadata:
+  name: weekly-pr-report
+  namespace: server-foundation
+  labels:
+    app.kubernetes.io/name: weekly-pr-report
+    app.kubernetes.io/part-of: server-foundation-agent
+spec:
+  schedule: "0 6 * * 1"
+  timeZone: Asia/Shanghai
+  concurrencyPolicy: Forbid
+  maxRetainedTasks: 5
+  taskTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: weekly-pr-report
+        app.kubernetes.io/part-of: server-foundation-agent
+    spec:
+      agentRef:
+        name: server-foundation-agent
+      description: |
+        Follow @workflows/weekly-pr-report.md to complete the task.
