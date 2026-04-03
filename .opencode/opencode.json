@@ -3,5 +3,8 @@
       "model": "google/gemini-3.1-pro-preview",
       "small_model": "google/gemini-3-flash-preview",
       "share": "disabled",
-      "autoupdate": false
+      "autoupdate": false,
+      "plugin": [
+        ["./", { "enabled": true }]
+      ]
 }
