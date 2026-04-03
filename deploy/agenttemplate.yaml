@@ -35,6 +35,10 @@ spec:
         ref: main
         secretRef:
           name: git-clone-credentials
+        sync:
+          enabled: true
+          interval: 5m
+          policy: HotReload
       mountPath: .
   credentials:
     - name: git
