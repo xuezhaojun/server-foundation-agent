@@ -1,0 +1,19 @@
+{
+  "name": "sfa-opencode-plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./tui": {
+      "import": "./tui.tsx",
+      "config": {
+        "enabled": true
+      }
+    }
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*",
+    "@opentui/core": "*",
+    "@opentui/solid": "*",
+    "solid-js": "*"
+  }
+}
