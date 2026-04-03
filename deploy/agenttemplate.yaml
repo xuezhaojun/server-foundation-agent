@@ -10,8 +10,8 @@ metadata:
     app.kubernetes.io/name: server-foundation-template
     app.kubernetes.io/part-of: server-foundation-agent
 spec:
-  agentImage: quay.io/kubeopencode/kubeopencode-agent-opencode:latest
-  executorImage: quay.io/kubeopencode/kubeopencode-agent-devbox:latest
+  agentImage: quay.io/kubeopencode/kubeopencode-agent-opencode:v0.0.18
+  executorImage: quay.io/kubeopencode/kubeopencode-agent-devbox:v0.0.18
   workspaceDir: /workspace
   serviceAccountName: server-foundation-agent
   maxConcurrentTasks: 2
