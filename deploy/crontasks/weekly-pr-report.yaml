@@ -21,7 +21,7 @@ spec:
         app.kubernetes.io/name: weekly-pr-report
         app.kubernetes.io/part-of: server-foundation-agent
     spec:
-      agentRef:
-        name: server-foundation-agent
+      templateRef:
+        name: server-foundation-template
       description: |
         Follow @workflows/weekly-pr-report.md to complete the task.
