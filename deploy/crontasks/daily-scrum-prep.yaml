@@ -21,7 +21,7 @@ spec:
         app.kubernetes.io/name: daily-scrum-prep
         app.kubernetes.io/part-of: server-foundation-agent
     spec:
-      agentRef:
-        name: server-foundation-agent
+      templateRef:
+        name: server-foundation-template
       description: |
         Follow @workflows/daily-scrum-prep.md to complete the task.
