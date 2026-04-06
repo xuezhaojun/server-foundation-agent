@@ -11,6 +11,9 @@ gh --version
 # jq (for JSON processing)
 jq --version
 
+# yq (for YAML processing)
+yq --version
+
 # Bash 4.0+ (macOS users: brew install bash)
 bash --version
 ```
@@ -19,10 +22,11 @@ Install missing tools:
 
 ```bash
 # macOS
-brew install gh jq bash
+brew install gh jq yq bash
 
 # Linux (Debian/Ubuntu)
 sudo apt-get install gh jq
+# yq: https://github.com/mikefarah/yq#install
 
 # Linux (RHEL/CentOS)
 sudo yum install gh jq
@@ -34,11 +38,10 @@ sudo yum install gh jq
 # Login to GitHub
 gh auth login
 
-# Grant required permissions
-gh auth refresh -s project -s read:org
-
 # Verify authentication
 gh auth status
 ```
 
 You should see "Logged in to github.com as <your-username>".
+
+Note: No special scopes (like `project`) are required. The skill uses `gh pr list` which only needs standard repo read access.

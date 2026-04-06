@@ -74,12 +74,12 @@ Assign each open human PR to **exactly one** primary category. Evaluate rules **
 
 Extract these fields from each PR:
 
-- **labels**: `[.content.labels.nodes[].name]` — array of label name strings
-- **isDraft**: `.content.isDraft` — boolean
-- **mergeable**: `.content.mergeable` — enum: `MERGEABLE`, `CONFLICTING`, or `UNKNOWN`
-- **reviewDecision**: `.content.reviewDecision` — enum: `APPROVED`, `CHANGES_REQUESTED`, `REVIEW_REQUIRED`, or `null`
-- **comments**: `.content.comments.nodes` — first 20 issue comments with author login (used for feedback detection)
-- **updatedAt**: `.content.updatedAt` — ISO 8601 timestamp
+- **labels**: `[.labels[].name]` — array of label name strings
+- **isDraft**: `.isDraft` — boolean
+- **mergeable**: `.mergeable` — enum: `MERGEABLE`, `CONFLICTING`, or `UNKNOWN`
+- **reviewDecision**: `.reviewDecision` — enum: `APPROVED`, `CHANGES_REQUESTED`, `REVIEW_REQUIRED`, or `null`
+- **comments**: `.comments` — first 20 issue comments with author login (used for feedback detection)
+- **updatedAt**: `.updatedAt` — ISO 8601 timestamp
 
 Helper definitions for rules:
 

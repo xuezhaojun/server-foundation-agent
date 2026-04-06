@@ -3,7 +3,7 @@
 Analyze all open Red Hat Konflux bot PRs on the Server Foundation project board, diagnose CI failures using
 failure pattern matching, attempt auto-fixes via sub-agents, and generate an actionable report.
 
-**Scope**: Only PRs authored by `red-hat-konflux` under the `stolostron` org are included. PRs from `open-cluster-management` and other orgs are excluded. Other bot PRs (dependabot, renovate, etc.) are also excluded. PRs with the `ai-ignore` label are skipped.
+**Scope**: Only PRs authored by `red-hat-konflux` in SF stolostron downstream repos (defined in `repos/repos.yaml` → `repos.server-foundation.stolostron`) are included. Non-SF repos (e.g., `console`, `backplane-must-gather`) are excluded at the data source level. Other bot PRs (dependabot, renovate, etc.) are also excluded. PRs with the `ai-ignore` label are skipped.
 
 ## Trigger Phrases
 
@@ -60,7 +60,7 @@ mkdir -p .output
 jq --argjson today_sec $(date +%s) -f workflows/weekly-bot-pr-hygiene/process_bot_prs.jq <raw_prs.json> > .output/bot_prs.json
 ```
 
-The jq script keeps only open PRs authored by `red-hat-konflux` and produces flat fields: `.author`, `.repo`, `.short_repo`, `.title`, `.url`, `.number`, `.age_days`, `.branch`, `.is_fork`.
+The jq script keeps only open PRs authored by `red-hat-konflux` and produces flat fields: `.author`, `.repo`, `.short_repo`, `.title`, `.url`, `.number`, `.age_days`, `.branch`, `.is_fork`. No repo filtering needed here — the data source (`fetch-prs.sh`) already only returns SF stolostron downstream repos.
 
 ### 2.2 Collect CI Check Results
 
