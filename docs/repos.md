@@ -2,7 +2,7 @@
 
 All Server Foundation related repositories are cloned as **read-only** shallow copies under `repos/`, organized by category. The repo registry is defined in [repos.yaml](../repos/repos.yaml).
 
-For active branch and version mapping information, see [releases.md](releases.md).
+For active branch and version mapping information, see [build-release/branch-tables.md](build-release/branch-tables.md).
 
 For inter-repository dependency analysis and diagrams, see [repo-dependencies.md](repo-dependencies.md).
 

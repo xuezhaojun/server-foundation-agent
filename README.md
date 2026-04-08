@@ -23,9 +23,9 @@ All detailed docs live under `docs/` and **MUST** be linked here. When adding or
 
 | Document | Description |
 |----------|-------------|
-| [docs/working-with-code.md](docs/working-with-code.md) | repos/ (read) vs workspace/ (write), intermediate artifacts, push workflow |
+| [docs/working-with-code.md](docs/working-with-code.md) | Code access patterns: repos/ (read-only) vs workspace/ (write), version-specific analysis, intermediate artifacts |
 | [repos/repos.yaml](repos/repos.yaml) | SF repo registry: categories, orgs, clone targets |
-| [docs/repos.md](docs/repos.md) | SF repo inventory, MCE/ACM classification, sync management |
+| [docs/repos.md](docs/repos.md) | SF repo inventory: MCE/ACM repos, deps, installers, QE tests, docs repos, sync management |
 | [docs/repo-dependencies.md](docs/repo-dependencies.md) | Repo dependency index (links to `docs/repo-deps/`) |
 | [docs/repo-deps/](docs/repo-deps/) | Repo deps reference: per-repo details, version alignment |
 
@@ -50,16 +50,15 @@ All detailed docs live under `docs/` and **MUST** be linked here. When adding or
 | Document | Description |
 |----------|-------------|
 | [team-members/team-members.md](team-members/team-members.md) | Team member info (name, GitHub, email). Name matching: abbreviations, all lowercase, and Chinese/English name order are all accepted |
-| [team-members/member-ownership.md](team-members/member-ownership.md) | Component/repository ownership mapping |
 
 **Infrastructure & Development** — load when deploying, developing the agent itself, or checking dependencies:
 
 | Document | Description |
 |----------|-------------|
-| [build/README.md](build/README.md) | Container image (Dockerfile): all runtime dependencies managed as code |
-| [deploy/README.md](deploy/README.md) | Architecture, KubeOpenCode platform setup, deployment steps, and operational guide |
+| [build/README.md](build/README.md) | Container image: Dockerfile, included/excluded runtimes, GitHub App auth scripts |
+| [deploy/README.md](deploy/README.md) | KubeOpenCode deployment: architecture, CRD reference, secrets, CronTask triggers, local dev setup |
 | [docs/dependencies.md](docs/dependencies.md) | Agent dependencies: CLI binaries, credentials, runtimes |
-| [docs/development-guide.md](docs/development-guide.md) | **(CRITICAL)** Development standards: commits, PRs, code style, SFA footprint. All development work MUST follow this guide |
+| [docs/development-guide.md](docs/development-guide.md) | **(CRITICAL)** Development standards: commits, PRs, code style, K8s library preferences, dependency management, multi-branch maintenance, SFA footprint. All development work MUST follow this guide |
 
 **Meta** — load when logging sessions or checking roadmap:
 

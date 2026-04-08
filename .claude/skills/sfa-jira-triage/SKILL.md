@@ -78,7 +78,7 @@ Group by severity (from `customfield_10840`):
 
 ### Step 4: Suggest actions
 
-For unassigned issues, suggest assignees based on component ownership from `team-members/member-ownership.md`.
+For unassigned issues, suggest assignees based on component keywords and team member expertise from `team-members/team-members.md`.
 
 ## Examples
 

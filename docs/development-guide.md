@@ -110,7 +110,7 @@ When doing maintenance work (dependency upgrades, CI fixes, etc.) across multipl
 
 ### Fast-forward rule
 
-The `main` branch automatically fast-forwards to the **latest release branch** (see [releases.md](releases.md) for the current target). You must **skip that branch** — it receives updates from `main` automatically. Never commit directly to the fast-forward target branch.
+The `main` branch automatically fast-forwards to the **latest release branch** (see [build-release/branch-tables.md](build-release/branch-tables.md) for the current target). You must **skip that branch** — it receives updates from `main` automatically. Never commit directly to the fast-forward target branch.
 
 ### Branch range by repo type
 
@@ -118,7 +118,7 @@ The `main` branch automatically fast-forwards to the **latest release branch** (
 - **ACM repos** have `release-*` branches only (no `backplane-*`)
 - **Special repos** (e.g., cluster-permission) may have both
 
-See [releases.md](releases.md) for the full active branch list and concrete examples.
+See [build-release/branch-tables.md](build-release/branch-tables.md) for the full active branch list and concrete examples.
 
 ## Dependency Management (CRITICAL)
 

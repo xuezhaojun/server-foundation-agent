@@ -424,7 +424,7 @@ The sub-agent maps bugs to repos using these signals (in priority order):
 
 1. **Component field** — Jira components often map directly to repos (e.g., "cluster-proxy" → cluster-proxy repo)
 2. **Keywords in summary/description** — Look for repo names, controller names, CRD names (e.g., "MCA" → ManagedClusterAddon → multicloud-operators-foundation or addon-framework)
-3. **Assignee ownership** — Cross-reference with `team-members/member-ownership.md`
+3. **Assignee ownership** — Cross-reference with `team-members/team-members.md`
 4. **Repo inventory** — Use `docs/repos.md` as the full list of SF repos
 
 ### Keyword → Repo Mapping (Common Patterns)

@@ -44,7 +44,7 @@ Use these signals (in priority order) to determine which repo(s) to search:
 
 2. **Component field** — If components include a repo-like name, use it.
 
-3. **Assignee ownership** — Read `team-members/member-ownership.md` to see what repos the assignee owns.
+3. **Assignee ownership** — Read `team-members/team-members.md` to identify the assignee.
 
 4. **Repo inventory** — Use `docs/repos.md` for the full list of SF repos.
 
