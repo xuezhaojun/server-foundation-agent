@@ -2,6 +2,15 @@
 
 This guide defines development standards that **MUST** be followed in all contexts — local development, CI/CD, and cloud-hosted agent runs.
 
+## Progressive Disclosure Guidelines
+
+When adding or modifying skills and docs, follow these sizing guidelines:
+
+- **SKILL.md** should stay under ~100 lines — extract detailed knowledge (field mappings, syntax references, templates) to `docs/` reference files
+- **Docs** over 150 lines likely cover multiple topics — split into sub-files under the appropriate subdirectory
+- Duplicated content across multiple skills should be extracted to a shared reference file
+- Ask: "Does the agent need this knowledge for every invocation, or only sometimes?" — if sometimes, put it in a reference file
+
 ## Code Standards
 
 ### Prefer Kubernetes Ecosystem Libraries
