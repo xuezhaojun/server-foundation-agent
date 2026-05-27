@@ -26,8 +26,9 @@ All detailed docs live under `docs/` and **MUST** be linked here. When adding or
 | [docs/working-with-code.md](docs/working-with-code.md) | Code access patterns: repos/ (read-only) vs workspace/ (write), version-specific analysis, intermediate artifacts |
 | [repos/repos.yaml](repos/repos.yaml) | SF repo registry: categories, orgs, clone targets |
 | [docs/repos.md](docs/repos.md) | SF repo inventory: MCE/ACM repos, deps, installers, QE tests, docs repos, sync management |
-| [docs/repo-dependencies.md](docs/repo-dependencies.md) | Repo dependency index (links to `docs/repo-deps/`) |
-| [docs/repo-deps/](docs/repo-deps/) | Repo deps reference: per-repo details, version alignment |
+| [SF-REPO-ARCHITECTURE.md](SF-REPO-ARCHITECTURE.md) | **Generated** upstream OCM-io vs downstream stolostron architectural overview with Mermaid diagrams |
+| [docs/repo-dependencies.md](docs/repo-dependencies.md) | (Outdated) Repo dependency index — see `SF-REPO-ARCHITECTURE.md` for current info |
+| [docs/repo-deps/](docs/repo-deps/) | (Outdated) Repo deps reference — see `SF-REPO-ARCHITECTURE.md` for current info |
 
 **Build, Release & CI** — load when working with builds, releases, or prow CI:
 

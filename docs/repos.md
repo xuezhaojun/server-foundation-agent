@@ -4,7 +4,7 @@ All Server Foundation related repositories are cloned as **read-only** shallow c
 
 For active branch and version mapping information, see [build-release/branch-tables.md](build-release/branch-tables.md).
 
-For inter-repository dependency analysis and diagrams, see [repo-dependencies.md](repo-dependencies.md).
+For the architectural overview of upstream vs downstream repos with dependency diagrams, see [SF-REPO-ARCHITECTURE.md](../SF-REPO-ARCHITECTURE.md). The older [repo-dependencies.md](repo-dependencies.md) is kept for reference but may be stale.
 
 ## Build Context
 

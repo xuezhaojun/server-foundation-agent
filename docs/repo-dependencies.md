@@ -1,5 +1,7 @@
 # Server Foundation Repository Dependencies
 
+> **OUTDATED** — This document was hand-written and is no longer actively maintained. Dependency versions and per-repo details may be stale. See [`SF-REPO-ARCHITECTURE.md`](../SF-REPO-ARCHITECTURE.md) for the current, generated architectural overview (upstream vs downstream repos, dependency flow, per-repo descriptions from code analysis). The diagrams below are preserved for reference but may not reflect the latest state.
+
 This document describes the inter-dependencies between all Server Foundation owned repositories.
 
 For the repo list and branch conventions, see [repos.md](repos.md).

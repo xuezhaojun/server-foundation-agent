@@ -1,5 +1,7 @@
 # Dependency Version Alignment
 
+> **OUTDATED** — This document was hand-written and version numbers are stale. See [`SF-REPO-ARCHITECTURE.md`](../../SF-REPO-ARCHITECTURE.md) for current architectural overview. To get live version data, clone repos and inspect `go.mod` directly (the `sfa-repo-architecture` skill does this automatically).
+
 Current dependency versions across all Server Foundation repositories.
 
 ## Version Table

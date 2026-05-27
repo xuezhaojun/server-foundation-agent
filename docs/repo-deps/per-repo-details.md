@@ -1,5 +1,7 @@
 # Per-Repo Dependency Details
 
+> **OUTDATED** — This document was hand-written and may be stale. See [`SF-REPO-ARCHITECTURE.md`](../../SF-REPO-ARCHITECTURE.md) for current per-repo descriptions generated from actual code analysis.
+
 Detailed dependency information for each Server Foundation repository.
 
 ## open-cluster-management-io (upstream)
