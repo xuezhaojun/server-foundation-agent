@@ -1,7 +1,20 @@
 # Daily Bug Triage Workflow
 
 Automatically triage all Server Foundation Jira bugs in "New" status by analyzing the codebase to find root causes,
-then send a summary Slack notification every weekday morning.
+then send a summary Slack notification every weekday morning. **Draft PR auto-fix (Phase 2.5) is off by default.**
+
+## Agent-swarm prompt
+
+For [agent-swarm](https://github.com/stolostron/agent-swarm) (OpenCode/Crush), use the
+self-contained prompt files instead of this document:
+
+| Role | File |
+|------|------|
+| Orchestrator | `prompts/daily-bug-triage.md` |
+| Per-bug sub-agent | `prompts/daily-bug-triage-analyze.md` |
+
+Index: [prompts/README.md](../prompts/README.md). This workflow doc remains the
+detailed reference (scripts, Slack format, edge cases).
 
 ## Trigger Phrases
 
@@ -11,9 +24,9 @@ then send a summary Slack notification every weekday morning.
 ## Workflow Phases
 
 ```
-Phase 1: Collect    →  Phase 1.5: Dedup     →  Phase 2: Analyze        →  Phase 2.5: Auto-Fix     →  Phase 3: Report    →  Phase 3.5: Jira     →  Phase 4: Distribute
-sfa-jira-search        check Jira comments      sub-agents per bug          draft PR for               generate Slack         post full analysis      sfa-slack-notify
-(status=New, type=Bug)  for prior agent           (codebase deep-dive)        high-confidence bugs       payload                as Jira comments
+Phase 1: Collect    →  Phase 1.5: Dedup     →  Phase 2: Analyze        →  Phase 2.5: Auto-Fix (opt-in)  →  Phase 3: Report    →  Phase 3.5: Jira     →  Phase 4: Distribute
+sfa-jira-search        check Jira comments      sub-agents per bug          draft PR only if ENABLE_AUTO_FIX   generate Slack         post full analysis      sfa-slack-notify
+(status=New, type=Bug)  for prior agent           (codebase deep-dive)        (skipped by default)             payload                as Jira comments
                         analysis
 ```
 
@@ -107,7 +120,7 @@ If no bugs are found (`len(bugs) == 0`), skip Phases 2-3 and send a simple "no n
 
 ## Phase 1.5: Dedup — Skip Previously Analyzed Bugs
 
-Bugs can stay in "New" status for days (PTO, meetings, etc.). Before spawning analysis sub-agents, check Jira comments to see if the agent has already analyzed each bug. This avoids redundant work and API calls.
+Bugs can stay in "New" status for days (PTO, meetings, etc.). Before spawning analysis sub-agents, check whether each bug was already triaged (label or comment). This avoids redundant work and API calls.
 
 ### 1.5.1 Check Prior Analysis
 
@@ -118,12 +131,15 @@ python3 workflows/daily-bug-triage/check_prior_analysis.py \
   .output/bug-triage/bugs_previously_analyzed.json
 ```
 
-The script:
-- Fetches comments for each bug via Jira REST API
-- Looks for comments containing both `"server-foundation-agent"` and `"Bug Triage Analysis"` (the signature left by Phase 3.5)
-- Splits bugs into two lists:
-  - **`bugs_to_analyze.json`** — no prior analysis found → proceed to Phase 2
-  - **`bugs_previously_analyzed.json`** — already analyzed → skip to report
+The script treats a bug as previously analyzed when **either**:
+
+- Issue has label **`agent-triaged`**, or
+- A comment contains both `"server-foundation-agent"` and `"Bug Triage Analysis"`
+
+It splits bugs into two lists:
+
+- **`bugs_to_analyze.json`** — no prior triage found → proceed to Phase 2
+- **`bugs_previously_analyzed.json`** — already triaged → skip to report
 
 ### 1.5.2 Use Filtered List
 
@@ -147,7 +163,7 @@ For each bug, spawn a **sub-agent** to perform a deep-dive analysis against the 
 
 Each sub-agent:
 1. Receives a single bug object (from Phase 1)
-2. Reads `workflows/daily-bug-triage/analyze_bug.md` for its instructions
+2. Reads `prompts/daily-bug-triage-analyze.md` (or `workflows/daily-bug-triage/analyze_bug.md`) for its instructions
 3. Identifies the relevant repository based on bug summary, description, and components
 4. Searches `repos/` (read-only clones) for relevant code
 5. Analyzes the root cause based on code and bug description
@@ -162,7 +178,7 @@ For each bug in bugs_to_analyze.json (filtered by Phase 1.5):
   Agent(
     subagent_type: "general-purpose",
     description: "Analyze bug <KEY>",
-    prompt: "Read workflows/daily-bug-triage/analyze_bug.md for instructions.
+    prompt: "Read prompts/daily-bug-triage-analyze.md for instructions.
              Here is the bug data: <BUG_JSON>.
              Analyze this bug and write the result to .output/bug-triage/analyses/bug-<KEY>.json"
   )
@@ -207,9 +223,14 @@ Each sub-agent writes a JSON file to `.output/bug-triage/analyses/bug-<KEY>.json
 
 ---
 
-## Phase 2.5: Auto-Fix for High-Confidence Bugs
+## Phase 2.5: Auto-Fix for High-Confidence Bugs (opt-in)
 
-After all analysis sub-agents complete, check for bugs eligible for automatic fix. For each eligible bug, spawn a **fix sub-agent** that implements the fix and submits a draft PR for human review.
+**Default: skip this phase.** Phase 2.5 runs only when explicitly enabled via
+`ENABLE_AUTO_FIX` in the task description / `instruction_prompt`, or env `AUTO_FIX=1`.
+
+When enabled, after all analysis sub-agents complete, check for bugs eligible for
+automatic fix. For each eligible bug, spawn a **fix sub-agent** that implements the
+fix and submits a draft PR for human review.
 
 ### Eligibility Gate
 
@@ -287,9 +308,10 @@ Agent(
 
 ### Skip Conditions
 
-Skip Phase 2.5 entirely if:
+Skip Phase 2.5 entirely by default, or when:
+
+- `ENABLE_AUTO_FIX` is **not** in the task description / `instruction_prompt` and `AUTO_FIX=1` is not set
 - No bugs have `auto_fix_eligible: true`
-- Environment variable `SKIP_AUTO_FIX=1` is set (manual override)
 
 ---
 
@@ -327,9 +349,16 @@ The script:
 - Reads each `bug-*.json` from the analyses directory
 - Builds a Jira wiki markup comment with the full root cause, suggested fix, relevant files, and draft PR link
 - Posts the comment via Jira REST API v2
+- Adds label **`agent-triaged`** to the issue after a successful comment
 - Skips bugs with `analysis_status == "error"`
 
-### 3.5.2 Skip Conditions
+### 3.5.2 Add Triage Label (MCP)
+
+When using Jira MCP instead of the script, after each successful `add_comment`, call
+**`update_issue`** / **`editJiraIssue`** to add label **`agent-triaged`** (skip if
+already present). Do not change status or other fields.
+
+### 3.5.3 Skip Conditions
 
 Skip this phase if:
 - `JIRA_EMAIL` or `JIRA_API_TOKEN` are not set

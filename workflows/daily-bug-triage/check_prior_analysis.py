@@ -9,8 +9,8 @@ Output: Two JSON files:
   - new_bugs_out: bugs that have NOT been previously analyzed (need full analysis)
   - skipped_bugs_out: bugs that HAVE been previously analyzed (skip to report)
 
-Detection: looks for comments containing "server-foundation-agent" AND
-"Bug Triage Analysis" — the signature left by post_jira_comments.py.
+Detection: issue has label `agent-triaged`, or comments containing
+"server-foundation-agent" AND "Bug Triage Analysis".
 
 Requires JIRA_EMAIL and JIRA_API_TOKEN environment variables.
 """
@@ -22,16 +22,20 @@ import base64
 
 
 AGENT_MARKERS = ["server-foundation-agent", "Bug Triage Analysis"]
+TRIAGE_LABEL = "agent-triaged"
 
 
-def fetch_comments(issue_key):
-    """Fetch comments for a Jira issue. Returns list of comment body strings."""
+def fetch_issue(issue_key):
+    """Fetch labels and comments for a Jira issue."""
     email = os.environ.get("JIRA_EMAIL", "")
     token = os.environ.get("JIRA_API_TOKEN", "")
     if not email or not token:
-        return []
+        return None
 
-    url = f"https://redhat.atlassian.net/rest/api/2/issue/{issue_key}/comment"
+    url = (
+        f"https://redhat.atlassian.net/rest/api/2/issue/{issue_key}"
+        f"?fields=labels,comment"
+    )
     credentials = base64.b64encode(f"{email}:{token}".encode()).decode()
     req = urllib.request.Request(
         url,
@@ -44,17 +48,25 @@ def fetch_comments(issue_key):
 
     try:
         with urllib.request.urlopen(req) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return [c.get("body", "") for c in data.get("comments", [])]
+            return json.loads(resp.read().decode("utf-8"))
     except Exception as e:
-        print(f"  WARN {issue_key}: failed to fetch comments: {e}", file=sys.stderr)
-        return []
+        print(f"  WARN {issue_key}: failed to fetch issue: {e}", file=sys.stderr)
+        return None
 
 
 def has_prior_analysis(issue_key):
-    """Check if server-foundation-agent has already posted a triage analysis."""
-    comments = fetch_comments(issue_key)
-    for body in comments:
+    """Check if server-foundation-agent has already triaged this bug."""
+    issue = fetch_issue(issue_key)
+    if not issue:
+        return False
+
+    fields = issue.get("fields", {})
+    labels = [lb.get("name", "") for lb in fields.get("labels", [])]
+    if TRIAGE_LABEL in labels:
+        return True
+
+    for comment in fields.get("comment", {}).get("comments", []):
+        body = comment.get("body", "")
         if all(marker in body for marker in AGENT_MARKERS):
             return True
     return False

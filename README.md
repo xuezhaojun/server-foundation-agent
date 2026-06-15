@@ -17,6 +17,7 @@ All detailed docs live under `docs/` and **MUST** be linked here. When adding or
 |----------|-------------|
 | [.claude/skills/README.md](.claude/skills/README.md) | Skills catalog, index, and instructions for adding new skills |
 | [workflows/README.md](workflows/README.md) | Workflows catalog: user-triggered or scheduled multi-phase processes |
+| [prompts/README.md](prompts/README.md) | Agent-swarm prompts: self-contained runnable specs (sync as Prompt Source) |
 | [solutions/README.md](solutions/README.md) | Solutions catalog, comparison with workflows/skills, and instructions for adding new solutions |
 
 **Repositories & Code** — load when reading/searching code, analyzing dependencies, or working with repos:

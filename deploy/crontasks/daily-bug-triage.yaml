@@ -24,4 +24,4 @@ spec:
       templateRef:
         name: server-foundation-template
       description: |
-        Follow @workflows/daily-bug-triage.md to complete the task.
+        Follow prompts/daily-bug-triage.md (agent-swarm) or workflows/daily-bug-triage.md (detailed reference).
