@@ -5,7 +5,8 @@ Usage:
     python3 workflows/daily-bug-triage/post_jira_comments.py <analyses_dir>
 
 For each bug-*.json in the analyses directory, posts a formatted Jira comment
-with the complete root cause analysis, relevant files, and suggested fix.
+with the complete root cause analysis, relevant files, and suggested fix, then
+adds the agent-triaged label.
 Requires JIRA_EMAIL and JIRA_API_TOKEN environment variables.
 """
 import json
@@ -15,6 +16,9 @@ import sys
 import urllib.request
 import base64
 import datetime
+
+
+TRIAGE_LABEL = "agent-triaged"
 
 
 def build_comment_body(analysis):
@@ -105,6 +109,42 @@ def post_comment(issue_key, body):
         return False
 
 
+def add_triage_label(issue_key):
+    """Add agent-triaged label to a Jira issue."""
+    email = os.environ.get("JIRA_EMAIL", "")
+    token = os.environ.get("JIRA_API_TOKEN", "")
+    if not email or not token:
+        print(f"  SKIP {issue_key}: cannot add label — JIRA creds not set", file=sys.stderr)
+        return False
+
+    url = f"https://redhat.atlassian.net/rest/api/2/issue/{issue_key}"
+    payload = json.dumps({"update": {"labels": [{"add": TRIAGE_LABEL}]}}).encode(
+        "utf-8"
+    )
+
+    credentials = base64.b64encode(f"{email}:{token}".encode()).decode()
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        method="PUT",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Basic {credentials}",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(req) as resp:
+            if resp.status in (200, 204):
+                print(f"  OK {issue_key}: label {TRIAGE_LABEL} added", file=sys.stderr)
+                return True
+            print(f"  FAIL {issue_key}: label HTTP {resp.status}", file=sys.stderr)
+            return False
+    except Exception as e:
+        print(f"  FAIL {issue_key}: label {e}", file=sys.stderr)
+        return False
+
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: post_jira_comments.py <analyses_dir>", file=sys.stderr)
@@ -138,6 +178,7 @@ def main():
 
         body = build_comment_body(analysis)
         if post_comment(key, body):
+            add_triage_label(key)
             success += 1
 
     print(f"Done: {success}/{len(files)} comments posted", file=sys.stderr)

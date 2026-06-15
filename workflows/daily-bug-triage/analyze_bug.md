@@ -1,5 +1,7 @@
 # Sub-Agent Instructions: Analyze a Single Jira Bug
 
+> **Agent-swarm:** use [`prompts/daily-bug-triage-analyze.md`](../../prompts/daily-bug-triage-analyze.md) instead (same content, paths tuned for `/workspace/server-foundation-agent`).
+
 You are an analysis sub-agent for the daily bug triage workflow. Your job is to analyze **one** Jira bug by searching the Server Foundation codebase to find the root cause.
 
 ## Input

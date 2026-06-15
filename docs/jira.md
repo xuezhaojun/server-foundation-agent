@@ -64,7 +64,7 @@ For automated daily team coaching (burndown, cycle time, Slack), use the [daily-
 | [sfa-bug-reproduce](../.claude/skills/sfa-bug-reproduce/SKILL.md) | End-to-end reproduction (cluster, test, Jira update) | "reproduce bug ACM-12345" |
 | [sfa-cve-analysis](../.claude/skills/sfa-cve-analysis/SKILL.md) | CVE grouping, tracking tasks, branch impact analysis | CVE monitoring, security triage |
 
-For deep triage of **New** bugs with codebase RCA and Slack, use [daily-bug-triage](../workflows/daily-bug-triage.md) instead of `sfa-jira-triage`.
+For deep triage of **New** bugs with codebase RCA and Slack, use [daily-bug-triage](../workflows/daily-bug-triage.md) instead of `sfa-jira-triage`. Agent-swarm runnable prompt: [prompts/daily-bug-triage.md](../prompts/daily-bug-triage.md).
 
 CVE dependency upgrade procedures: see [older-branch-dep-upgrade](../solutions/older-branch-dep-upgrade.md) in `solutions/`.
 
