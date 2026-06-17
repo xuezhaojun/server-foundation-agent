@@ -21,6 +21,7 @@ Load these on-demand based on the task at hand:
 | [JQL Reference](jira/jql-reference.md) | `docs/jira/jql-reference.md` | Building search queries, JQL syntax and functions |
 | [API Reference](jira/api-reference.md) | `docs/jira/api-reference.md` | REST API endpoints, authentication, curl examples |
 | [Templates](jira/templates.md) | `docs/jira/templates.md` | Issue creation templates (Bug, Epic, Story, Task, Vulnerability) |
+| [Agent automation](../prompts/README.md#jira-automation-model) | `prompts/README.md` | Scheduled triage + fix pipeline, labels, grooming |
 
 ## Bootstrap Sequence
 
@@ -65,6 +66,17 @@ For automated daily team coaching (burndown, cycle time, Slack), use the [daily-
 | [sfa-cve-analysis](../.claude/skills/sfa-cve-analysis/SKILL.md) | CVE grouping, tracking tasks, branch impact analysis | CVE monitoring, security triage |
 
 For deep triage of **New** bugs with codebase RCA and Slack, use [daily-bug-triage](../workflows/daily-bug-triage.md) instead of `sfa-jira-triage`. Agent-swarm runnable prompt: [prompts/daily-bug-triage.md](../prompts/daily-bug-triage.md).
+
+## Agent automation
+
+Two-stage SF Jira automation:
+
+![SF Jira automation model](assets/jira-automation-model.png)
+
+- **[daily-bug-triage](../workflows/daily-bug-triage.md)** / [prompt](../prompts/daily-bug-triage.md): triage only; auto-fix stays **off** unless `ENABLE_AUTO_FIX` is set.
+- **[jira-pipeline](../prompts/jira-pipeline.md)**: the **only** scheduled auto-fix path; runs only when a human has added `issue-for-agent` after triage. On-demand single issue: [jira-solve](../prompts/jira-solve.md).
+
+Full details: [prompts/README.md](../prompts/README.md#jira-automation-model).
 
 CVE dependency upgrade procedures: see [older-branch-dep-upgrade](../solutions/older-branch-dep-upgrade.md) in `solutions/`.
 

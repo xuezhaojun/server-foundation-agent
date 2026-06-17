@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2800" height="209" viewBox="0 0 2800 209" role="img" aria-label="SF Jira automation model">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .title { font: 600 24px Arial, Helvetica, sans-serif; fill: #111827; }
+      .node { font: 500 20px Arial, Helvetica, sans-serif; fill: #111827; }
+      .stage { fill: #f9fafb; stroke: #9ca3af; stroke-width: 2; }
+      .box { fill: #ffffff; stroke: #d1d5db; stroke-width: 2; }
+      .line { stroke: #2563eb; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="2800" height="209" fill="#f3f4f6"/>
+
+  <!-- daily-bug-triage -->
+  <rect class="stage" x="90" y="32" width="720" height="145" rx="14"/>
+  <text class="title" x="114" y="58">daily-bug-triage</text>
+  <rect class="box" x="118" y="88" width="150" height="56" rx="10"/><text class="node" x="193" y="122" text-anchor="middle">New SF bugs</text>
+  <rect class="box" x="304" y="88" width="220" height="56" rx="10"/><text class="node" x="414" y="122" text-anchor="middle">Analyze + comment</text>
+  <rect class="box" x="560" y="88" width="220" height="56" rx="10"/><text class="node" x="670" y="122" text-anchor="middle">label agent-triaged</text>
+  <line class="line" x1="268" y1="116" x2="304" y2="116"/>
+  <line class="line" x1="524" y1="116" x2="560" y2="116"/>
+
+  <!-- Human groom -->
+  <rect class="stage" x="858" y="32" width="560" height="145" rx="14"/>
+  <text class="title" x="882" y="58">Human groom</text>
+  <rect class="box" x="886" y="88" width="240" height="56" rx="10"/><text class="node" x="1006" y="122" text-anchor="middle">Human reviews triage</text>
+  <rect class="box" x="1162" y="88" width="228" height="56" rx="10"/><text class="node" x="1276" y="122" text-anchor="middle">label issue-for-agent</text>
+  <line class="line" x1="1126" y1="116" x2="1162" y2="116"/>
+
+  <!-- jira-pipeline -->
+  <rect class="stage" x="1466" y="32" width="1244" height="145" rx="14"/>
+  <text class="title" x="1490" y="58">jira-pipeline twice daily</text>
+  <rect class="box" x="1494" y="88" width="190" height="56" rx="10"/><text class="node" x="1589" y="122" text-anchor="middle">Agent queue JQL</text>
+  <rect class="box" x="1720" y="88" width="160" height="56" rx="10"/><text class="node" x="1800" y="122" text-anchor="middle">Fix one issue</text>
+  <rect class="box" x="1916" y="88" width="120" height="56" rx="10"/><text class="node" x="1976" y="122" text-anchor="middle">Draft PR</text>
+  <rect class="box" x="2072" y="88" width="240" height="56" rx="10"/><text class="node" x="2192" y="122" text-anchor="middle">label agent-processed</text>
+  <line class="line" x1="1684" y1="116" x2="1720" y2="116"/>
+  <line class="line" x1="1880" y1="116" x2="1916" y2="116"/>
+  <line class="line" x1="2036" y1="116" x2="2072" y2="116"/>
+
+  <!-- inter-stage -->
+  <line class="line" x1="780" y1="116" x2="886" y2="116"/>
+  <line class="line" x1="1390" y1="116" x2="1494" y2="116"/>
+</svg>

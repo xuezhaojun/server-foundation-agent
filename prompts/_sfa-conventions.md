@@ -34,6 +34,26 @@ After posting triage analysis, add label **`agent-triaged`** via MCP `update_iss
 REST fallback in `post_jira_comments.py`). Used for dedup in Phase 1.5 alongside
 the triage comment signature.
 
+### Jira pipeline labels
+
+| Label | When |
+|-------|------|
+| `agent-triaged` | Added by daily triage after analysis comment |
+| `issue-for-agent` | Added by a human when the issue is ready for agent fix |
+| `agent-processed` | Added by jira-pipeline after a successful fix attempt (draft PR) |
+
+Full automation model (diagram, grooming, schedules):
+[prompts/README.md](README.md#jira-automation-model).
+
+**Agent queue JQL** (jira-pipeline):
+
+```
+project = ACM AND component = "Server Foundation" AND resolution = Unresolved AND status in (New, "To Do") AND labels = agent-triaged AND labels = issue-for-agent AND labels != agent-processed ORDER BY created ASC
+```
+
+Grooming: triage first → human reviews → add `issue-for-agent` → pipeline picks up.
+To retry: remove `agent-processed`, keep `issue-for-agent`.
+
 ## Code access
 
 | Location | Use |
@@ -47,7 +67,28 @@ Never commit inside `repos/`.
 
 - Use `gh` for PRs
 - Draft PRs until a human marks ready
-- Commits: conventional + `Signed-off-by`
+- Commits: conventional + `Signed-off-by` + `Co-authored-by: server-foundation-agent <sfa-bot@redhat.com>`
+
+### SFA footprint (PRs and Jira comments)
+
+From `docs/development-guide.md` — required for agent-created PRs (including jira-solve):
+
+1. After `gh pr create`: `gh pr edit <PR-NUMBER> --repo <org/repo> --add-label "sfa-assisted"`
+2. PR description footer:
+   ```markdown
+   ---
+   *Created with [server-foundation-agent](https://github.com/stolostron/server-foundation-agent)*
+   ```
+3. Jira comments end with:
+   ```
+   ----
+   _— server-foundation-agent_
+   ```
+
+If `sfa-assisted` is not defined on the target repo, `gh pr edit --add-label` fails;
+note it in the run summary — the PR remains open.
+
+Query agent PRs: `label:sfa-assisted is:pr org:stolostron`
 
 ## Slack
 
