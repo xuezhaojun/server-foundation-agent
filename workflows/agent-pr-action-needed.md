@@ -88,6 +88,15 @@ workflows/agent-pr-action-needed/
 Uses `fetch-prs.sh all` — open PRs across SF stolostron downstream repos from
 `repos/repos.yaml`. Cached 5 minutes by default; pass `nocache` for a fresh pull.
 
+```bash
+bash .claude/skills/sfa-github-fetch-prs/fetch-prs.sh all \
+  2> .output/agent-pr-action-needed/fetch.log \
+  > .output/agent-pr-action-needed/raw_prs.json
+jq -e 'type == "array"' .output/agent-pr-action-needed/raw_prs.json >/dev/null
+```
+
+Script logs go to stderr only. **Do not** use `2>&1` when saving `raw_prs.json`.
+
 ### Phase 2: Classify
 
 `filter_agent_prs.jq` keeps PRs that match **agent PR signals**:
@@ -99,7 +108,8 @@ Uses `fetch-prs.sh all` — open PRs across SF stolostron downstream repos from
 Then splits into:
 
 1. **`draft_ready_for_review`** — `isDraft == true`
-2. **`awaiting_approval`** — not draft and `reviewDecision == REVIEW_REQUIRED`
+2. **`awaiting_approval`** — not draft and needs approval (`reviewDecision` is
+   `REVIEW_REQUIRED` or empty; excludes `APPROVED` and `CHANGES_REQUESTED`)
 
 ### Phase 3–4: Slack
 
@@ -135,6 +145,8 @@ Configure the webhook in the Swarmer workspace secret or
 ## Edge cases
 
 - **Empty buckets:** Still post Slack when webhook is set — confirms the job ran
+- **Invalid `raw_prs.json`:** Phase 1 used `2>&1` and merged `[INFO]` log lines into the file — redirect stderr to `fetch.log` only
+- **Empty stdout / cache errors on Linux:** GNU `stat -f` is not BSD format; use current `fetch-prs.sh` with `file_mtime_epoch`
 - **Missing `sfa-assisted` label:** PRs still match via author or branch name
 - **`CHANGES_REQUESTED`:** Excluded from `awaiting_approval`; humans fix or re-run agent
 - **Repo fetch failure:** `fetch-prs.sh` skips failed repos with a warning; note in summary

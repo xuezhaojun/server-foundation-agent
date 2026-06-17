@@ -46,12 +46,23 @@ get_cache_file() {
     echo "$CACHE_DIR/prs_sf_${detail_level}.json"
 }
 
+# mtime as epoch seconds (GNU stat on Linux, BSD stat on macOS)
+file_mtime_epoch() {
+    local cache_file=$1
+    if stat --version >/dev/null 2>&1; then
+        stat -c %Y "$cache_file" 2>/dev/null
+    else
+        stat -f %m "$cache_file" 2>/dev/null
+    fi
+}
+
 is_cache_valid() {
     local cache_file=$1
     [ -f "$cache_file" ] || return 1
     local file_mtime
-    file_mtime=$(stat -f %m "$cache_file" 2>/dev/null || stat -c %Y "$cache_file" 2>/dev/null)
+    file_mtime=$(file_mtime_epoch "$cache_file")
     [ -n "$file_mtime" ] || return 1
+    [[ "$file_mtime" =~ ^[0-9]+$ ]] || return 1
     local age=$(( $(date +%s) - file_mtime ))
     if [ "$age" -lt "$CACHE_TTL" ]; then
         log_info "Cache valid (age: ${age}s, TTL: ${CACHE_TTL}s)"

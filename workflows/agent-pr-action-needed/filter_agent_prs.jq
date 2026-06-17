@@ -27,7 +27,17 @@ def jira_key:
 def is_agent_pr:
   (.author | is_acm_agent)
   or has_label("sfa-assisted")
-  or ((.headRefName // "") | test("^(sfa/)?fix-ACM-[0-9]+$"));
+  or ((.headRefName // "") | test("^(sfa/)?fix-ACM-[0-9]+"));
+
+def needs_approval:
+  # Non-draft agent PRs still needing org-member approval.
+  # gh often returns reviewDecision "" (not "REVIEW_REQUIRED") when ready for
+  # review but no reviews submitted yet — include both.
+  .is_draft == false
+  and ((.review_decision // "NONE") as $d |
+    ($d == "REVIEW_REQUIRED" or $d == "" or $d == "NONE")
+    and $d != "CHANGES_REQUESTED"
+    and $d != "APPROVED");
 
 def needs_ok_to_test:
   has_label("needs-ok-to-test");
@@ -63,12 +73,12 @@ def flatten_pr:
         )}
     ],
     awaiting_approval: [
-      $agent_prs[] | select(.is_draft == false and .review_decision == "REVIEW_REQUIRED")
+      $agent_prs[] | select(needs_approval)
       | . + {action: (
           if .needs_ok_to_test then
             "Comment `/ok-to-test`, then *Approve* the PR (reviews and CI gate merge)"
           else
-            "*Approve* the PR — code is ready for review but lacks required approval"
+            "*Approve* the PR — ready for review but lacks required approval"
           end
         )}
     ]
