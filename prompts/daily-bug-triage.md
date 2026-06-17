@@ -2,7 +2,8 @@
 
 Triage all Server Foundation Jira bugs in **New** status: codebase root-cause
 analysis, Jira comments, and Slack summary. **Auto-fix (draft PRs) is off by
-default** — enable only with `ENABLE_AUTO_FIX` in `instruction_prompt`.
+default** — enable only with `ENABLE_AUTO_FIX` in `instruction_prompt`. Issues
+labeled `issue-for-agent` are handled by `jira-pipeline.md`, not this workflow.
 
 Designed for **non-interactive** scheduled runs (weekday cron). Detailed reference:
 `workflows/daily-bug-triage.md`.
