@@ -333,11 +333,14 @@ When classification is **❌ Vulnerable** or **⚠️ Potentially Vulnerable**:
 
 1. **Dedup PR:** search for an open PR on the repo with branch/title containing
    `{cve_id}` or `{cve_id lower}`; if found → record `skipped_existing_pr`, link PR in
-   tracking-task comment, for each linked issue transition New → **In Progress** →
-   **Review** when still before Review (see step 8), then skip new PR
+   tracking-task comment, ensure each linked issue is **In Progress** (see step 2), then
+   skip new PR
 2. **Start work in Jira** — for each linked vulnerability issue (MCP `transition_issue`):
-   - If status is **In Progress**, **Review**, or later → skip
-   - Otherwise transition to **In Progress** (transition name may be `Start Progress`)
+   - If status is already **In Progress** → skip
+   - If status is New/To Do/Backlog → transition to **In Progress** (transition name
+     may be `Start Progress`)
+   - If status is **Review** or later → do **not** change status (human owns workflow
+     beyond In Progress); still post PR comment in step 8
    - If transition fails: MCP `add_comment` with the error, record `action: failed`,
      skip PR for this `(repo, branch, CVE)` group
 3. **Clone worktree:**
@@ -392,13 +395,14 @@ When classification is **❌ Vulnerable** or **⚠️ Potentially Vulnerable**:
    )"
    gh pr edit <PR-NUMBER> --repo <org/repo> --add-label "sfa-assisted"
    ```
+   If the label does not exist on the target repo, note in the run summary; the draft PR
+   is still valid.
 8. **Jira updates** for each linked vulnerability issue:
    - MCP `add_comment` with PR URL, fix summary, and signature footer
    - MCP `update_issue` — set `git_pull_requests` to the PR URL when the field is
      supported (best effort)
-   - MCP `transition_issue` to **Review** when available (transition name may be
-     `Request Review` or `Review`); skip if already Review or later; record transition
-     failure in `remediation.json` notes but do not revert the PR
+   - Leave status at **In Progress** after opening a draft PR — do **not** transition to
+     Review (humans move to Review after marking the PR ready for review)
 9. MCP `add_comment` on tracking task — PR table for this CVE
 10. Record `action: pr_opened` with `pr_url` in `remediation.json`
 
