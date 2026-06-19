@@ -40,6 +40,11 @@ Two-stage SF Jira automation:
 agent PRs in those states, and posts a digest to Slack (`SLACK_WEBHOOK_URL`). Full flow:
 [workflows/agent-pr-action-needed.md](../workflows/agent-pr-action-needed.md).
 
+**[jira-pipeline-pr-review.md](jira-pipeline-pr-review.md)** runs on a schedule, picks one
+open `acm-agent` pipeline PR (`sfa-assisted`, `ACM-*` title) with review feedback, addresses
+CodeRabbit and human review comments, squashes to one commit, and force-pushes. Full flow:
+[workflows/jira-pipeline-pr-review.md](../workflows/jira-pipeline-pr-review.md).
+
 Agent queue JQL and extended docs: [`_sfa-conventions.md`](_sfa-conventions.md)
 
 ## Prompt map
@@ -50,6 +55,7 @@ Agent queue JQL and extended docs: [`_sfa-conventions.md`](_sfa-conventions.md)
 | `daily-bug-triage-analyze.md` | spawned by triage orchestrator | — |
 | `jira-pipeline.md` | `sfa-jira-pipeline` | `0 9,17 * * 1-5` (weekdays 09:00 and 17:00 Asia/Shanghai) |
 | `agent-pr-action-needed.md` | `sfa-agent-pr-action-needed` | `30 9,17 * * 1-5` (30 min after pipeline) |
+| `jira-pipeline-pr-review.md` | `sfa-jira-pipeline-pr-review` | `0 10,18 * * 1-5` (after pipeline; address review feedback) |
 | `jira-solve.md` | `sfa-jira-solve` | On-demand + `instruction_prompt: ACM-12345` |
 
 Triage also references helper scripts under `workflows/daily-bug-triage/` and optional

@@ -75,7 +75,7 @@ Extended conventions: `prompts/_sfa-conventions.md`
 6. **Clone worktree**
    ```bash
    bash .claude/skills/sfa-workspace-clone/clone-worktree.sh \
-     --new <org/repo> fix/<KEY> --base main
+     --new <org/repo> fix-<KEY> --base main
    ```
    Use `relevant_repo` from triage (e.g. `stolostron/managedcluster-import-controller`).
    For release-specific fixes, pass `--base release-*` or `--base backplane-*` when
