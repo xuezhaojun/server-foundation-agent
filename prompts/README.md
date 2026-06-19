@@ -57,9 +57,16 @@ Agent queue JQL and extended docs: [`_sfa-conventions.md`](_sfa-conventions.md)
 | `agent-pr-action-needed.md` | `sfa-agent-pr-action-needed` | `30 9,17 * * 1-5` (30 min after pipeline) |
 | `jira-pipeline-pr-review.md` | `sfa-jira-pipeline-pr-review` | `0 10,18 * * 1-5` (after pipeline; address review feedback) |
 | `jira-solve.md` | `sfa-jira-solve` | On-demand + `instruction_prompt: ACM-12345` |
+| `fix-cve.md` | `sfa-fix-cve` | On-demand or cron (e.g. `0 9 * * 1-5` weekdays 09:00 Asia/Shanghai) |
 
 Triage also references helper scripts under `workflows/daily-bug-triage/` and optional
 long-form docs in `workflows/daily-bug-triage.md`.
+
+**CVE fix:** `fix-cve.md` groups ProsSec vulnerability issues by CVE,
+creates tracking tasks via `format-cve-tracking-task.py`, runs deep branch impact
+analysis, posts Jira comments, opens **draft PRs** for fixable CVEs, and **closes**
+vulnerability issues classified as Not Applicable. Skill:
+`.claude/skills/sfa-cve-analysis/`.
 
 ## Conventions
 
