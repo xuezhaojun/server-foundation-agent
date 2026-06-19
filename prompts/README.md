@@ -27,6 +27,19 @@ Two-stage SF Jira automation:
 
 **Grooming:** triage → human adds `issue-for-agent` → pipeline fixes one issue → `agent-processed`. To retry: remove `agent-processed`, keep `issue-for-agent`.
 
+### Human PR gate (after pipeline)
+
+`jira-pipeline` opens **draft** PRs via `acm-agent[bot]` with `sfa-assisted` (and usually
+`needs-ok-to-test` on stolostron repos). CI and review do not proceed until a developer:
+
+1. Marks the PR **Ready for review**
+2. Comments **`/ok-to-test`** when `needs-ok-to-test` is present
+3. **Approves** once review looks good
+
+**[agent-pr-action-needed.md](agent-pr-action-needed.md)** runs on a schedule, lists open
+agent PRs in those states, and posts a digest to Slack (`SLACK_WEBHOOK_URL`). Full flow:
+[workflows/agent-pr-action-needed.md](../workflows/agent-pr-action-needed.md).
+
 Agent queue JQL and extended docs: [`_sfa-conventions.md`](_sfa-conventions.md)
 
 ## Prompt map
@@ -36,6 +49,7 @@ Agent queue JQL and extended docs: [`_sfa-conventions.md`](_sfa-conventions.md)
 | `daily-bug-triage.md` | `sfa-daily-bug-triage` | `0 9 * * 1-5` (weekdays 09:00 Asia/Shanghai) |
 | `daily-bug-triage-analyze.md` | spawned by triage orchestrator | — |
 | `jira-pipeline.md` | `sfa-jira-pipeline` | `0 9,17 * * 1-5` (weekdays 09:00 and 17:00 Asia/Shanghai) |
+| `agent-pr-action-needed.md` | `sfa-agent-pr-action-needed` | `30 9,17 * * 1-5` (30 min after pipeline) |
 | `jira-solve.md` | `sfa-jira-solve` | On-demand + `instruction_prompt: ACM-12345` |
 
 Triage also references helper scripts under `workflows/daily-bug-triage/` and optional

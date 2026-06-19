@@ -78,6 +78,13 @@ Two-stage SF Jira automation:
 
 Full details: [prompts/README.md](../prompts/README.md#jira-automation-model).
 
+### Human PR gate
+
+After `jira-pipeline` creates a draft PR (`acm-agent[bot]`, `sfa-assisted`, often
+`needs-ok-to-test`), developers must mark it ready, run `/ok-to-test`, and approve.
+Scheduled Slack reminders: [agent-pr-action-needed](../prompts/agent-pr-action-needed.md)
+/ [workflow](../workflows/agent-pr-action-needed.md).
+
 CVE dependency upgrade procedures: see [older-branch-dep-upgrade](../solutions/older-branch-dep-upgrade.md) in `solutions/`.
 
 ## Lifecycle Integration

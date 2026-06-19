@@ -90,6 +90,14 @@ note it in the run summary — the PR remains open.
 
 Query agent PRs: `label:sfa-assisted is:pr org:stolostron`
 
+### Agent PR human gate
+
+Pipeline PRs stay **draft** until a developer marks them ready. Bot PRs on stolostron
+repos need **`/ok-to-test`** while `needs-ok-to-test` is set. Non-draft PRs need
+**approval** when `reviewDecision` is `REVIEW_REQUIRED`.
+
+Scheduled Slack digest: [agent-pr-action-needed.md](agent-pr-action-needed.md).
+
 ## Slack
 
 - `SLACK_WEBHOOK_URL` for notifications
