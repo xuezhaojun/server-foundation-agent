@@ -31,7 +31,10 @@ required (REST often returns 404 on ProsSec issues).
 
 **GitHub:** `gh` for draft PRs. Commits: Conventional Commits + `Signed-off-by` +
 `Co-authored-by: server-foundation-agent <sfa-bot@redhat.com>`. Label `sfa-assisted`
-after PR create (see `prompts/_sfa-conventions.md`).
+after PR create when the label exists (see `prompts/_sfa-conventions.md`).
+
+**Slack:** `SLACK_WEBHOOK_URL` + `workflows/fix-cve/generate_slack_payload.py` +
+`.claude/skills/sfa-slack-notify/send_to_slack.sh` (Phase 7 — required when webhook set).
 
 **Output dir:** `.output/cve-analysis/` (under working directory)
 
@@ -106,7 +109,7 @@ Repos using `release-*` instead of `backplane-*`: `klusterlet-addon-controller`,
 ## Workflow
 
 ```
-Collect → Group by CVE → Tracking tasks → Deep analysis → Jira comments → Remediation → [Slack] → Summary
+Collect → Group by CVE → Tracking tasks → Deep analysis → Jira comments → Remediation → Slack → Summary
 ```
 
 ## Phase 1: Collect vulnerability issues
@@ -123,8 +126,9 @@ Collect → Group by CVE → Tracking tasks → Deep analysis → Jira comments 
 3. Write `.output/cve-analysis/vulnerabilities.json` — array of `{key, summary, labels,
    status, priority, created, target_version, url}`.
 
-4. **Early exit:** if zero issues, post minimal Slack ("no active SF CVE issues") when
-   `SLACK_WEBHOOK_URL` is set, then stop successfully.
+4. **Early exit:** if zero issues, write `.output/cve-analysis/remediation.json` as
+   `[]`, then run Phase 7 Slack ("no active SF CVE issues") when `SLACK_WEBHOOK_URL` is
+   set, then stop successfully.
 
 ## Phase 2: Group by CVE
 
@@ -421,19 +425,43 @@ Write `.output/cve-analysis/remediation-report.md` with:
 Post the remediation summary (or link to full report) as MCP `add_comment` on each
 tracking task processed this run.
 
-## Phase 7: Slack (optional)
+Write `.output/cve-analysis/run_meta.json` before Phase 7 (counts for Slack):
 
-If `SLACK_WEBHOOK_URL` is set and not `SKIP_SLACK`, post a digest:
+```json
+{
+  "issues_found": 15,
+  "cves_processed": 2,
+  "comments_posted": 17,
+  "failures": ["sfa-assisted label not found on target repos"],
+  "follow_up": "Optional one-line human follow-up for Slack"
+}
+```
 
-- CVEs processed this run
-- New tracking tasks created (keys + links)
-- Count of vulnerability issues commented
-- Draft PRs opened (count + links from `remediation.json`)
-- Vulnerability issues closed as Not Applicable (count + keys)
-- Remediation failures (if any)
+## Phase 7: Slack
 
-Use `bash .claude/skills/sfa-slack-notify/send_to_slack.sh` with a JSON payload under
-`.output/cve-analysis/slack_payload.json`, or post a simple text block via the webhook.
+**Required** when `SLACK_WEBHOOK_URL` is set unless `SKIP_SLACK`. Do not skip silently.
+
+### 7.1 Generate payload
+
+```bash
+python3 workflows/fix-cve/generate_slack_payload.py \
+  .output/cve-analysis/ \
+  .output/cve-analysis/slack_payload.json
+```
+
+Input: `remediation.json`, optional `run_meta.json`, optional `vulnerabilities.json`.
+
+### 7.2 Send
+
+```bash
+bash .claude/skills/sfa-slack-notify/send_to_slack.sh \
+  .output/cve-analysis/slack_payload.json
+```
+
+- If `SLACK_WEBHOOK_URL` is unset → skip Phase 7 and log `Slack: skipped (no webhook)`
+  in the final summary
+- If send fails → record error in final summary; do not fail the whole run
+- Record `Slack: sent` or `Slack: failed (<reason>)` in the session output
 
 ## Final summary
 
@@ -446,6 +474,7 @@ Report in session output:
 - **Remediation:** draft PRs opened (table: PR URL, repo, branch, linked keys)
 - **Remediation:** vulnerability issues closed as Not Applicable (table: key, rationale)
 - Remediation skipped / failed counts from `remediation.json`
+- **Slack:** sent / skipped / failed (with reason)
 - Failures (assignee, MCP, clone, missing branches, PR push, Jira transition)
 - Recommended human follow-ups (remaining branches, mark PRs ready, `/ok-to-test`)
 
@@ -463,6 +492,7 @@ Report in session output:
 ## Do not
 
 - Ask the user for confirmation (automated mode)
+- Skip Phase 7 when `SLACK_WEBHOOK_URL` is set (unless `SKIP_SLACK`)
 - Hand-format tracking task repository tables (always use the script)
 - Use curl REST for comments on vulnerability issues
 - Create duplicate tracking tasks for the same CVE
