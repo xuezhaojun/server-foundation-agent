@@ -98,6 +98,17 @@ repos need **`/ok-to-test`** while `needs-ok-to-test` is set. Non-draft PRs need
 
 Scheduled Slack digest: [agent-pr-action-needed.md](agent-pr-action-needed.md).
 
+### Agent PR review feedback loop
+
+After a pipeline PR is marked ready and reviewers (CodeRabbit, humans) leave comments,
+[jira-pipeline-pr-review.md](jira-pipeline-pr-review.md) addresses feedback on **one**
+pipeline PR per run. Filter: `acm-agent` or `app/acm-agent` author, `sfa-assisted`
+label, `ACM-*` title, non-draft, and unresolved review feedback. Branch shape is not
+a gate; common patterns include `sfa/fix-ACM-*`, `sfa/fix-ACM-*-v2`, and `sfa/fix/ACM-*`.
+Ends with squash + `git push --force-with-lease`.
+
+Does **not** replace human approval — only implements review suggestions.
+
 ## Slack
 
 - `SLACK_WEBHOOK_URL` for notifications
