@@ -1,0 +1,244 @@
+"""Tests for fix-cve Slack payload bucketing (mocked PR state, no gh)."""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "workflows" / "fix-cve"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "workflows" / "lib"))
+
+from gh_pr_state import PrState  # noqa: E402
+
+# Import module under test by path
+import importlib.util
+
+_spec = importlib.util.spec_from_file_location(
+    "generate_slack_payload",
+    Path(__file__).resolve().parents[1]
+    / "workflows"
+    / "fix-cve"
+    / "generate_slack_payload.py",
+)
+_mod = importlib.util.module_from_spec(_spec)
+assert _spec.loader is not None
+_spec.loader.exec_module(_mod)
+
+
+def _state(url: str, repo: str, num: int, state: str, draft: bool) -> PrState:
+    return PrState(
+        url=url,
+        repo=repo,
+        number=num,
+        state=state,
+        is_draft=draft,
+        merged_at="2026-06-22T20:19:32Z" if state == "MERGED" else None,
+    )
+
+
+@patch.object(_mod, "pr_state_from_row")
+def test_aggregate_buckets_merged_vs_ready(mock_from_row):
+    remediation = [
+        {
+            "action": "skipped_existing_pr",
+            "pr_url": "https://github.com/stolostron/ocm/pull/767",
+            "repo": "stolostron/ocm",
+            "branch": "backplane-2.8",
+            "issue_key": "ACM-1",
+        },
+        {
+            "action": "skipped_existing_pr",
+            "pr_url": "https://github.com/stolostron/klusterlet-addon-controller/pull/659",
+            "repo": "stolostron/klusterlet-addon-controller",
+            "branch": "release-2.13",
+            "issue_key": "ACM-2",
+        },
+    ]
+
+    def side_effect(row):
+        url = row["pr_url"]
+        if "ocm" in url:
+            return _state(url, "stolostron/ocm", 767, "MERGED", False)
+        return _state(url, "stolostron/klusterlet-addon-controller", 659, "OPEN", False)
+
+    mock_from_row.side_effect = side_effect
+    prs = _mod._aggregate_prs(remediation)
+    buckets = _mod._bucket_prs(prs)
+    assert len(buckets["merged"]) == 1
+    assert len(buckets["awaiting_approval"]) == 1
+    assert len(buckets["draft"]) == 0
+
+    follow_up = _mod._derive_follow_up(buckets)
+    assert follow_up.startswith("•")
+    assert "\n•" in follow_up or follow_up.count("•") == 1
+    assert "<https://github.com/stolostron/klusterlet-addon-controller/pull/659|klusterlet-addon-controller#659>" in follow_up
+    assert "/approve" in follow_up
+
+
+def test_follow_up_extra_splits_into_bullets():
+    lookup = {
+        "multicloud-operators-foundation#1319": "https://github.com/stolostron/multicloud-operators-foundation/pull/1319",
+        "klusterlet-addon-controller#659": "https://github.com/stolostron/klusterlet-addon-controller/pull/659",
+    }
+    extra = (
+        "multicloud-operators-foundation#1319 needs /approve; "
+        "klusterlet-addon-controller#659 needs prow; "
+        "Consider backport PRs for backplane-2.9"
+    )
+    bullets = _mod._follow_up_extra_bullets(extra, lookup)
+    assert len(bullets) == 3
+    assert all(b.startswith("• ") for b in bullets)
+    assert "multicloud-operators-foundation/pull/1319" in bullets[0]
+    assert "backplane-2.9" in bullets[2]
+
+
+def test_closure_rows_this_run_from_remediation():
+    remediation = [
+        {
+            "issue_key": "ACM-35352",
+            "action": "closed_merged_pr",
+            "closed_this_run": True,
+            "pr_url": "https://github.com/stolostron/ocm/pull/767",
+        },
+        {
+            "issue_key": "ACM-35353",
+            "action": "closed_merged_pr",
+            "closed_this_run": False,
+            "pr_url": "https://github.com/stolostron/ocm/pull/767",
+        },
+    ]
+    rows = _mod._closure_rows_this_run(remediation, {}, "closed_merged_pr")
+    assert len(rows) == 1
+    assert rows[0]["issue_key"] == "ACM-35352"
+
+
+def test_closure_rows_this_run_falls_back_to_run_meta():
+    remediation = []
+    meta = {
+        "jira_closed_this_run": [
+            {
+                "issue_key": "ACM-35352",
+                "action": "closed_merged_pr",
+                "closed_this_run": True,
+                "pr_url": "https://github.com/stolostron/ocm/pull/767",
+                "notes": "ocm#767 merged on backplane-2.8",
+            }
+        ]
+    }
+    rows = _mod._closure_rows_this_run(remediation, meta, "closed_merged_pr")
+    assert len(rows) == 1
+    line = _mod._format_closed_merged_line(rows[0])
+    assert "ACM-35352" in line
+    assert "ocm/pull/767" in line
+    assert "ocm #767" in line
+    assert line.index("ocm #767") < line.index("ACM-35352")
+
+
+def test_closure_rows_ignores_legacy_jira_closed_without_flag():
+    remediation = [
+        {
+            "issue_key": "ACM-35352",
+            "action": "closed_merged_pr",
+            "pr_url": "https://github.com/stolostron/ocm/pull/767",
+        }
+    ]
+    meta = {
+        "jira_closed": [
+            {
+                "issue_key": "ACM-35354",
+                "action": "closed_merged_pr",
+                "pr_url": "https://github.com/stolostron/clusterlifecycle-state-metrics/pull/642",
+            }
+        ]
+    }
+    rows = _mod._closure_rows_this_run(remediation, meta, "closed_merged_pr")
+    assert rows == []
+
+
+def test_aggregate_closed_merged_groups_by_pr():
+    rows = [
+        {
+            "issue_key": f"ACM-{k}",
+            "pr_url": "https://github.com/stolostron/ocm/pull/767",
+            "repo": "stolostron/ocm",
+            "branch": "backplane-2.8",
+            "action": "closed_merged_pr",
+            "closed_this_run": True,
+        }
+        for k in (35352, 35353, 35355, 35357, 35358)
+    ]
+    groups = _mod._aggregate_closed_merged(rows)
+    assert len(groups) == 1
+    assert len(groups[0]["keys"]) == 5
+    line = _mod._format_pr_line(
+        groups[0]["pr_url"],
+        groups[0]["repo"],
+        groups[0]["branch"],
+        groups[0]["keys"],
+        pr_number=groups[0]["pr_number"],
+    )
+    assert "ACM-35352" in line
+    assert "ACM-35358" in line
+    assert "ocm #767" in line
+
+
+def test_format_pr_line_validates_pr_url():
+    line = _mod._format_pr_line(
+        "https://github.com/stolostron/ocm/pull/767",
+        "stolostron/ocm",
+        "backplane-2.8",
+        ["ACM-1"],
+        pr_number=767,
+    )
+    assert "<https://github.com/stolostron/ocm/pull/767|ocm #767>" in line
+
+
+def test_format_pr_line_invalid_url_falls_back_to_plain_text():
+    line = _mod._format_pr_line(
+        "https://evil.example|<!channel>",
+        "stolostron/ocm",
+        "backplane-2.8",
+        ["ACM-1"],
+        pr_number=767,
+    )
+    assert "<https://" not in line.split("—")[0]
+    assert "ocm #767" in line
+    assert "<!channel>" not in line
+
+
+def test_format_closed_merged_line_invalid_url_falls_back_to_plain_text():
+    line = _mod._format_closed_merged_line(
+        {
+            "issue_key": "ACM-1",
+            "pr_url": "not-a-github-pr|@channel>",
+            "repo": "stolostron/ocm",
+            "branch": "backplane-2.8",
+        }
+    )
+    assert "<https://" not in line.split("—")[0]
+    assert "ACM-1" in line
+
+
+def test_format_closed_merged_line_escapes_malicious_issue_key():
+    line = _mod._format_closed_merged_line(
+        {
+            "issue_key": "<!channel>",
+            "pr_url": "",
+            "notes": "Fix PR merged",
+        }
+    )
+    assert "<!channel>" not in line
+    assert "&lt;!channel&gt;" in line
+
+
+def test_format_closed_na_line_escapes_malicious_issue_key():
+    line = _mod._format_closed_na_line(
+        {
+            "issue_key": "ACM-1|<!here>",
+            "notes": "Not applicable",
+        }
+    )
+    assert "<!here>" not in line
+    assert "redhat.atlassian.net/browse/ACM-1" in line

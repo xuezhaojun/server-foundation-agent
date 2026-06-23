@@ -274,6 +274,9 @@ Skip issues that already have the dedup signature (unless `FORCE_REANALYSIS`).
 Run after Phase 5 unless `SKIP_REMEDIATION` is set. Non-interactive — do not ask the
 user.
 
+**Start each run with an empty** `.output/cve-analysis/remediation.json` (`[]`). Append
+rows as actions occur this run — do not carry forward rows from prior runs.
+
 Write `.output/cve-analysis/remediation.json` — array of action records:
 
 ```json
@@ -285,12 +288,25 @@ Write `.output/cve-analysis/remediation.json` — array of action records:
   "impact": "Not Applicable",
   "action": "closed",
   "pr_url": null,
-  "notes": "go mod why shows ssh package not needed"
+  "pr_state": null,
+  "is_draft": null,
+  "merged_at": null,
+  "notes": "go mod why shows ssh package not needed",
+  "closed_this_run": true
 }
 ```
 
-`action` values: `pr_opened`, `closed`, `skipped_already_fixed`, `skipped_existing_pr`,
-`failed`.
+Set `"closed_this_run": true` **only** on `closed` and `closed_merged_pr` rows when
+this run successfully transitions the issue to Closed. Omit or set `false` for all other
+actions. Slack *Closed this run* sections include **only** rows with `closed_this_run:
+true`.
+
+`action` values: `pr_opened`, `pr_merged`, `pr_closed`, `closed`, `closed_merged_pr`,
+`skipped_already_fixed`, `skipped_existing_pr`, `failed`.
+
+When a row has `pr_url`, also record live GitHub fields from `gh pr view` (see PR
+state helpers below): `pr_state` (`OPEN` / `MERGED` / `CLOSED`), `is_draft`, `merged_at`.
+Phase 7 re-fetches these fields before Slack; stale merged PRs must not appear as drafts.
 
 ### 6.1 Build remediation plan
 
@@ -317,7 +333,9 @@ When deep analysis classifies the issue's repo/branch as **➖ Not Applicable**:
    - Then transition to **Closed** (or **Resolve** then **Close** if the workflow
      requires two steps)
    - If transition fails, record `action: failed` with error; do **not** retry blindly
-3. Record each closed issue in `remediation.json`
+3. **First** record each closed issue in `remediation.json` with `action: closed`,
+   `closed_this_run: true`, and a `notes` rationale; mirror in `run_meta.json` →
+   `jira_closed_this_run`. **Then** transition.
 4. MCP `add_comment` on the tracking task summarizing closed keys for this CVE
 
 **Guardrail:** close **only** when classification is Not Applicable with documented
@@ -335,10 +353,30 @@ When classification is **✅ Not Vulnerable** (installed version ≥ fix version
 
 When classification is **❌ Vulnerable** or **⚠️ Potentially Vulnerable**:
 
-1. **Dedup PR:** search for an open PR on the repo with branch/title containing
-   `{cve_id}` or `{cve_id lower}`; if found → record `skipped_existing_pr`, link PR in
-   tracking-task comment, ensure each linked issue is **In Progress** (see step 2), then
-   skip new PR
+**PR state helpers (required whenever recording `pr_url`):**
+
+```bash
+# Dedup — open PRs only (never trust Jira git_pull_requests without verifying)
+gh pr list --repo <org/repo> --state open --search "<CVE-ID> in:title" \
+  --json number,url,state,isDraft,mergedAt,title
+
+# Verify a specific PR before recording skipped_existing_pr / pr_opened
+gh pr view <number> --repo <org/repo> --json state,isDraft,mergedAt,url,title
+```
+
+- If `state` is `MERGED` → record `action: pr_merged` (not `skipped_existing_pr`);
+  include `merged_at`; do **not** list as needing draft/approval follow-up
+- If `state` is `CLOSED` (unmerged) → record `action: pr_closed`; open a new PR if still
+  vulnerable
+- If `state` is `OPEN` and `isDraft` is `true` → `skipped_existing_pr` or `pr_opened`
+- If `state` is `OPEN` and `isDraft` is `false` → same actions; Slack reports as
+  *ready for review*, not draft
+
+1. **Dedup PR:** use `gh pr list --state open` on the repo with title containing
+   `{cve_id}`; verify with `gh pr view --json state,isDraft,mergedAt`. Do **not** treat
+   Jira `git_pull_requests` as authoritative — always verify with `gh`. If an open PR is
+   found → record `skipped_existing_pr` with PR state fields, link PR in tracking-task
+   comment, ensure each linked issue is **In Progress** (see step 2), then skip new PR
 2. **Start work in Jira** — for each linked vulnerability issue (MCP `transition_issue`):
    - If status is already **In Progress** → skip
    - If status is New/To Do/Backlog → transition to **In Progress** (transition name
@@ -398,27 +436,119 @@ When classification is **❌ Vulnerable** or **⚠️ Potentially Vulnerable**:
    EOF
    )"
    gh pr edit <PR-NUMBER> --repo <org/repo> --add-label "sfa-assisted"
+   gh pr view <PR-NUMBER> --repo <org/repo> --json state,isDraft,mergedAt,url,title
    ```
    If the label does not exist on the target repo, note in the run summary; the draft PR
    is still valid.
 8. **Jira updates** for each linked vulnerability issue:
    - MCP `add_comment` with PR URL, fix summary, and signature footer
    - MCP `update_issue` — set `git_pull_requests` to the PR URL when the field is
-     supported (best effort)
+     supported (best effort); re-verify with `gh pr view` on later runs — merged PRs in
+     Jira must not block new fixes
    - Leave status at **In Progress** after opening a draft PR — do **not** transition to
      Review (humans move to Review after marking the PR ready for review)
-9. MCP `add_comment` on tracking task — PR table for this CVE
-10. Record `action: pr_opened` with `pr_url` in `remediation.json`
+9. MCP `add_comment` on tracking task — PR table for this CVE (include PR state:
+   draft / ready / merged)
+10. Record `action: pr_opened` with `pr_url`, `pr_state`, `is_draft`, and `merged_at` in
+    `remediation.json`
 
 **Limit:** at most **one new PR per repo/branch/CVE** per run. Defer extra branches to
 the run summary as human follow-ups.
 
-### 6.5 Remediation report
+### 6.5 Close vulnerability issues when fix PR is merged
+
+Run after §6.4. Query **In Progress** vulnerability issues only (tickets with an active
+fix in flight). Non-interactive — do not ask the user.
+
+**JQL (MCP `search_issues`):**
+
+```jql
+project = ACM AND issuetype = Vulnerability AND component = "Server Foundation" AND labels = Security AND status = "In Progress"
+```
+
+If `instruction_prompt` names a CVE, append `AND summary ~ "CVE-YYYY-NNNNN"`.
+
+For each **In Progress** issue:
+
+1. **Skip unless still In Progress** — if MCP `get_issue` status is **Closed** or **Done**,
+   do not close or record a closure row.
+
+2. **Skip if already closed this run previously** — agent-signed comment contains
+   `CVE Remediation: PR merged` and `_— server-foundation-agent_` unless
+   `FORCE_REANALYSIS`.
+
+   > **Note:** A `Fix Merged:` comment alone is **not** a skip — that comment may have
+   > been posted when the PR merged without a successful Jira transition (or the issue
+   > was reopened). If status is still **In Progress** and `gh` confirms `MERGED`,
+   > proceed to close and record `closed_this_run: true`.
+
+3. **Discover linked fix PR(s)** (try in order; verify every URL with `gh`):
+   - MCP `get_issue` — development / `git_pull_requests` URLs
+   - MCP issue comments — `https://github.com/.../pull/N` from agent-signed comments
+   - If no URL: map issue → repo + branch (§Branch mapping), extract CVE from summary;
+     ```bash
+     gh pr list --repo <org/repo> --state merged \
+       --search "<CVE-ID> in:title" \
+       --json number,url,state,mergedAt,baseRefName
+     ```
+     Pick the PR whose `baseRefName` matches the issue target branch
+
+4. **Verify merge** — `gh pr view <url> --json state,mergedAt,url` — proceed **only**
+   when `state` is `MERGED`
+
+5. **Record then close (order mandatory):**
+   - **First** append to `remediation.json` with `closed_this_run: true` (and mirror in
+     `run_meta.json` → `jira_closed_this_run` — see §6.6). Slack *Closed this run*
+     reports **only** rows with `closed_this_run: true` from this run.
+   - MCP `add_comment` (wiki markup):
+     - `CVE Remediation: PR merged`
+     - Merged PR URL and `mergedAt`
+     - One-line fix summary (repo, branch, version bump)
+     - Footer `_— server-foundation-agent_`
+   - MCP `transition_issue` toward **Closed** (multi-step OK):
+     - Shortest path from **In Progress** through Review / Testing / Resolved to **Closed**
+     - If a transition fails, record `action: failed` with error; do **not** retry blindly
+     - If transition succeeds, ensure the row has `closed_this_run: true`
+   - Example `remediation.json` row:
+     ```json
+     {
+       "cve_id": "CVE-2026-39821",
+       "issue_key": "ACM-35352",
+       "repo": "stolostron/ocm",
+       "branch": "backplane-2.8",
+       "action": "closed_merged_pr",
+       "closed_this_run": true,
+       "pr_url": "https://github.com/stolostron/ocm/pull/767",
+       "pr_state": "MERGED",
+       "merged_at": "2026-06-22T20:19:32Z",
+       "notes": "ocm#767 merged: golang.org/x/net v0.53.0 → v0.56.0 on backplane-2.8"
+     }
+     ```
+
+6. MCP `add_comment` on the CVE tracking task — table of issues closed via merged PR
+   **this run only** (issue key → PR link → reason)
+
+When one merged PR covers multiple vulnerability issues (listed in the PR body), **close
+and record `closed_merged_pr` with `closed_this_run: true` for every linked issue still
+In Progress** — not only the first. Parse `ACM-xxxxx` keys from the merged PR
+description. **Do not** record or close issues already **Closed**/**Done**, or already
+bearing a `CVE Remediation: PR merged` agent comment.
+
+**Guardrails:**
+
+- Close **only** when `gh` confirms `MERGED` for a PR that fixes this issue's
+  repo/branch/CVE
+- Do **not** close on open/draft PRs, unmerged closed PRs, or branch version alone
+- Do **not** close ✅ Not Vulnerable issues automatically (§6.3) — only ❌/⚠️ with merged
+  fix PR, or §6.2 Not Applicable
+
+### 6.6 Remediation report
 
 Write `.output/cve-analysis/remediation-report.md` with:
 
 - PRs opened (URL, repo, branch, linked JIRA keys)
 - Issues closed as Not Applicable (keys + one-line rationale)
+- Issues closed because fix PR merged (keys + PR URL)
 - Skipped (already fixed, existing PR)
 - Failures (PR create, transition, tests)
 
@@ -433,15 +563,51 @@ Write `.output/cve-analysis/run_meta.json` before Phase 7 (counts for Slack):
   "cves_processed": 2,
   "comments_posted": 17,
   "failures": ["sfa-assisted label not found on target repos"],
-  "follow_up": "Optional one-line human follow-up for Slack"
+  "follow_up": "Optional non-PR notes only (e.g. z-stream backport branches)",
+  "jira_closed_this_run": [
+    {
+      "issue_key": "ACM-35352",
+      "action": "closed_merged_pr",
+      "closed_this_run": true,
+      "pr_url": "https://github.com/stolostron/ocm/pull/767",
+      "notes": "ocm#767 merged: golang.org/x/net v0.53.0 → v0.56.0 on backplane-2.8"
+    }
+  ]
 }
 ```
+
+Append every Jira closure **this run** to `jira_closed_this_run` (same shape as
+`remediation.json` closure rows, including `closed_this_run: true`). Used as a backup if
+`remediation.json` is incomplete. Do **not** list issues that were already Closed before
+this run.
+
+`follow_up` is appended after auto-generated PR follow-up (clickable PR links per open
+PR). Use only for **non-PR** notes (e.g. z-stream backport branches). Do **not** list PR
+approval steps or bare `repo#number` references — Slack links PRs automatically.
 
 ## Phase 7: Slack
 
 **Required** when `SLACK_WEBHOOK_URL` is set unless `SKIP_SLACK`. Do not skip silently.
 
-### 7.1 Generate payload
+### 7.1 Verify closure records
+
+Before Slack, confirm every Jira transitioned to Closed **this run** has a matching row in
+`remediation.json` (`action`: `closed` or `closed_merged_pr`, `closed_this_run: true`).
+If any closure is missing, append the row now. Re-read `remediation.json` after edits.
+Do **not** add closure rows for issues that were already Closed before this run.
+
+### 7.2 Refresh PR state
+
+```bash
+python3 workflows/fix-cve/enrich_remediation_prs.py \
+  .output/cve-analysis/remediation.json
+```
+
+Re-queries `gh` for every `pr_url` in `remediation.json`, updates `pr_state` /
+`is_draft` / `merged_at`, and reclassifies merged or closed PRs (`pr_merged` /
+`pr_closed`). If `gh` is unavailable, Phase 7.2 falls back to stored fields.
+
+### 7.3 Generate payload
 
 ```bash
 python3 workflows/fix-cve/generate_slack_payload.py \
@@ -450,8 +616,14 @@ python3 workflows/fix-cve/generate_slack_payload.py \
 ```
 
 Input: `remediation.json`, optional `run_meta.json`, optional `vulnerabilities.json`.
+Buckets open PRs into *Draft*, *Ready for review*, and *Merged* using live GitHub state.
+Follow-up lists each open PR as a clickable link with the required human action.
+Reports `closed_merged_pr` and `closed` rows with `closed_this_run: true` under *Closed
+this run (merged PR)* and *Closed as Not Applicable*. Falls back to
+`run_meta.jira_closed_this_run` when `remediation.json` is incomplete. Issues closed on
+prior runs are **not** re-reported.
 
-### 7.2 Send
+### 7.4 Send
 
 ```bash
 bash .claude/skills/sfa-slack-notify/send_to_slack.sh \
@@ -471,8 +643,10 @@ Report in session output:
 - Tracking tasks created vs reused
 - Deep analyses completed
 - Jira comments posted (tracking + per-issue counts)
-- **Remediation:** draft PRs opened (table: PR URL, repo, branch, linked keys)
+- **Remediation:** PRs by state (draft / ready / merged; table: PR URL, repo, branch,
+  linked keys)
 - **Remediation:** vulnerability issues closed as Not Applicable (table: key, rationale)
+- **Remediation:** vulnerability issues closed because fix PR merged (table: key, PR URL)
 - Remediation skipped / failed counts from `remediation.json`
 - **Slack:** sent / skipped / failed (with reason)
 - Failures (assignee, MCP, clone, missing branches, PR push, Jira transition)
@@ -497,6 +671,7 @@ Report in session output:
 - Use curl REST for comments on vulnerability issues
 - Create duplicate tracking tasks for the same CVE
 - Mark draft PRs ready for review or merge them
-- Close vulnerability issues unless classification is **Not Applicable** with evidence
+- Close vulnerability issues unless: (a) **Not Applicable** with evidence (§6.2), or
+  (b) linked fix PR is **MERGED** per `gh` (§6.5)
 - Open more than one PR per `(repo, branch, CVE)` per run
 - Cascade major dependency upgrades on older branches (follow the older-branch SOP)
